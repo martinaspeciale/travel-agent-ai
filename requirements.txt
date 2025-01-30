@@ -1,0 +1,7 @@
+langchain>=0.1.0
+langchain-core
+langchain-groq
+langgraph
+python-dotenv
+googlemaps
+termcolor
