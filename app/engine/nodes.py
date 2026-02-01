@@ -84,51 +84,47 @@ def trip_planner_node(state: TravelAgentState):
     
     return {"itinerary": itinerary_data, "retry_count": state.get("retry_count", 0) + 1}
 
-# --- 4. FINDER NODE (RIFATTO) ---
+# --- 4. FINDER NODE ---
 def places_finder_node(state: TravelAgentState):
-    """
-    Non chiede più all'LLM di generare query.
-    Prende i nomi dei luoghi dal JSON del Planner e cerca su Maps.
-    """
-    logger.log_event("FINDER", "START", "Verifica Luoghi Reali su Maps")
+    logger.log_event("FINDER", "START", "Verifica Luoghi con Tool Maps")
     
     updated_itinerary = []
     
-    # Itera sui giorni pianificati dal Planner
     for day in state.get('itinerary', []):
-        logger.log_event("FINDER", "THOUGHT", f"Processo Giorno {day.get('day_number')}")
-        
         validated_places = []
         for place in day.get('places', []):
             place_name = place.get('name', 'Luogo sconosciuto')
-            
-            # Costruiamo la query di ricerca
             query = f"{place_name} {state['destination']}"
             
-            logger.log_event("FINDER", "ACTION", f"Cerco: {query}")
+            logger.log_event("FINDER", "ACTION", f"Richiesta Tool per: {query}")
             
-            results = find_places_on_maps.invoke(query)
+            # --- CHIAMATA TRAMITE DECORATORE TOOL ---
+            try:
+                # Essendo un @tool, usiamo .invoke()
+                results = find_places_on_maps.invoke(query)
+            except Exception as e:
+                logger.log_event("FINDER", "ERROR", f"Errore invoke tool: {e}")
+                results = []
 
+            # Se il tool ha restituito la lista di dict correttamente
             if results and isinstance(results, list) and len(results) > 0:
-                # Usiamo i dati reali di Google
                 real_place = results[0]
                 validated_places.append({
                     "name": real_place.get("name"),
                     "address": real_place.get("address"),
                     "rating": real_place.get("rating", "N/A"),
-                    "description": f"Verificato su Maps (ID: {real_place.get('place_id')})"
+                    "description": "Verificato con Google Maps"
                 })
+                logger.log_event("FINDER", "RESULT", f"Trovato: {real_place.get('name')}")
             else:
-                # Non trovato, teniamo il dato del Planner ma lo segniamo
-                logger.log_event("FINDER", "WARNING", f"Non trovato su Maps: {place_name}")
+                logger.log_event("FINDER", "WARNING", f"Nessun match per: {place_name}")
                 validated_places.append({
                     "name": place_name,
-                    "address": place.get("address", "Indirizzo non trovato"),
+                    "address": place.get("address", "N/A"),
                     "rating": "N/A",
-                    "description": "Luogo suggerito dall'AI (non verificato)"
+                    "description": "Non verificato (Verifica quota API)"
                 })
         
-        # Aggiorniamo i luoghi del giorno
         day['places'] = validated_places
         updated_itinerary.append(day)
         
