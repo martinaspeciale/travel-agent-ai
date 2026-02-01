@@ -1,20 +1,32 @@
 import os
 import urllib.parse
-from docx import Document 
+from docx import Document
 from docx.shared import Pt, RGBColor
 
+# --- CONFIGURAZIONE ---
+OUTPUT_DIR = "outputs"
+
+def _ensure_output_dir():
+    """
+    Crea la cartella outputs se non esiste.
+    Usa il percorso assoluto per evitare errori se lanciato da altre posizioni.
+    """
+    base_path = os.getcwd()
+    full_output_path = os.path.join(base_path, OUTPUT_DIR)
+    
+    if not os.path.exists(full_output_path):
+        os.makedirs(full_output_path)
+    return full_output_path
+
 def generate_gmaps_search_link(name, address):
-    """Genera un link di ricerca robusto per Google Maps."""
+    """Genera un link di ricerca universale (evita errori 404)."""
     if not name and not address:
         return None
     
-    # Combina nome e indirizzo per massima precisione
     query = f"{name} {address}".strip()
-    
-    # Codifica la stringa (es. ' ' diventa '%20', 'ß' diventa '%C3%9F')
+    # Codifica URL sicura
     safe_query = urllib.parse.quote(query)
-    
-    # Usa l'API universale di ricerca (funziona sempre, niente 404)
+    # Usa l'API di ricerca universale ufficiale
     return f"https://www.google.com/maps/search/?api=1&query={safe_query}"
 
 def print_terminal_report(state):
@@ -23,11 +35,9 @@ def print_terminal_report(state):
     print("="*60)
     
     itinerary = state.get('itinerary', [])
-    
     for day in itinerary:
         print(f"\n📅 Giorno {day['day_number']}: {day['focus']}")
         print("-" * 40)
-        
         for p in day.get('places', []):
             name = p.get('name', 'Senza nome')
             rating = p.get('rating', 'N/A')
@@ -37,16 +47,18 @@ def print_terminal_report(state):
             if address:
                 print(f"      🏠 {address}")
             
-            # Genera link immediato anche nel terminale
             link = generate_gmaps_search_link(name, address)
             if link:
                 print(f"      🔗 Maps: {link}")
             print("      ---")
 
 def generate_html_report(state):
+    """Genera un report HTML visivamente ricco."""
+    output_dir = _ensure_output_dir()
+    
     dest = state.get('destination', 'Viaggio')
-    # Nome file sicuro (senza spazi)
     filename = f"viaggio_{dest.replace(' ', '_').lower()}.html"
+    filepath = os.path.join(output_dir, filename)
     
     html = f"""
     <!DOCTYPE html>
@@ -55,15 +67,16 @@ def generate_html_report(state):
         <title>Viaggio a {dest}</title>
         <meta charset="utf-8">
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f0f2f5; color: #333; }}
-            h1 {{ color: #2c3e50; text-align: center; margin-bottom: 30px; }}
-            .day-card {{ background: white; padding: 25px; margin-bottom: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
-            .day-title {{ color: #e67e22; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }}
-            .place {{ margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3498db; }}
-            .place-name {{ font-weight: bold; font-size: 1.1em; }}
-            .place-rating {{ color: #f1c40f; }}
-            .btn-map {{ display: inline-block; background: #3498db; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 0.9em; margin-top: 5px; }}
-            .btn-map:hover {{ background: #2980b9; }}
+            body {{ font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f0f2f5; color: #333; }}
+            h1 {{ color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }}
+            .day-card {{ background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+            h2 {{ color: #e67e22; }}
+            .place {{ margin-top: 15px; padding: 10px; background: #f9f9f9; border-left: 5px solid #3498db; border-radius: 4px; }}
+            .place-name {{ font-size: 1.1em; font-weight: bold; }}
+            .rating {{ color: #f1c40f; font-weight: bold; }}
+            .address {{ font-style: italic; color: #555; margin: 5px 0; }}
+            a.btn {{ display: inline-block; margin-top: 5px; background: #3498db; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 0.9em; }}
+            a.btn:hover {{ background: #2980b9; }}
         </style>
     </head>
     <body>
@@ -71,54 +84,46 @@ def generate_html_report(state):
     """
     
     for day in state.get('itinerary', []):
-        html += f"""
-        <div class='day-card'>
-            <h2 class='day-title'>📅 Giorno {day['day_number']}: {day['focus']}</h2>
-        """
-        
+        html += f"<div class='day-card'><h2>📅 Giorno {day['day_number']}: {day['focus']}</h2>"
         for p in day.get('places', []):
-            name = p.get('name', 'Nome non disp.')
+            name = p.get('name', 'Senza nome')
             address = p.get('address', '')
             rating = p.get('rating', 'N/A')
             link = generate_gmaps_search_link(name, address)
             
             html += f"""
             <div class='place'>
-                <div class='place-name'>{name} <span class='place-rating'>★ {rating}</span></div>
-                <div style='color: #666; font-size: 0.9em; margin: 4px 0;'>{address}</div>
+                <div class='place-name'>{name} <span class='rating'>★ {rating}</span></div>
+                <div class='address'>{address}</div>
             """
-            
             if link:
-                html += f"<a href='{link}' class='btn-map' target='_blank'>📍 Vedi su Google Maps</a>"
-            
+                html += f"<a href='{link}' class='btn' target='_blank'>📍 Vedi su Maps</a>"
             html += "</div>"
-            
         html += "</div>"
         
     html += "</body></html>"
     
-    # Scrittura file con encoding UTF-8 per supportare emoji e caratteri speciali
-    with open(filename, "w", encoding="utf-8") as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         f.write(html)
         
-    return filename
+    return filepath
 
 def generate_docx_report(state):
-    """Genera un file Word (.docx) con l'itinerario."""
+    """Genera un file Word ben formattato."""
+    output_dir = _ensure_output_dir()
+    
     destination = state.get('destination', 'Viaggio')
     filename = f"viaggio_{destination.replace(' ', '_').lower()}.docx"
+    filepath = os.path.join(output_dir, filename)
     
-    # 1. Crea il documento
     doc = Document()
     
-    # Titolo
+    # Titolo Principale
     title = doc.add_heading(f'✈️ Itinerario: {destination.upper()}', 0)
-    title.alignment = 1  # Center alignment
+    title.alignment = 1 # Center
 
-    # Intro
     doc.add_paragraph(f"Ecco il tuo piano di viaggio generato dall'AI per {destination}.")
 
-    # 2. Loop sui giorni
     for day in state.get('itinerary', []):
         # Intestazione Giorno
         doc.add_heading(f"📅 Giorno {day['day_number']}: {day['focus']}", level=1)
@@ -128,24 +133,27 @@ def generate_docx_report(state):
             rating = p.get('rating', 'N/A')
             address = p.get('address', '')
             
-            # Nome del luogo 
+            # Nome Luogo 
             p_para = doc.add_paragraph()
             runner = p_para.add_run(f"📍 {name}")
             runner.bold = True
             runner.font.size = Pt(12)
+            runner.font.color.rgb = RGBColor(0, 51, 102) # Blu scuro
             
-            # Rating e Indirizzo
+            # Dettagli
             doc.add_paragraph(f"   ⭐ Rating: {rating}")
             doc.add_paragraph(f"   🏠 Indirizzo: {address}")
             
-            # Link (Word non supporta link facili via codice senza hack XML complessi, 
-            # quindi mettiamo l'URL come testo cliccabile dai moderni reader)
+            # Link Maps
             link = generate_gmaps_search_link(name, address)
             if link:
-                doc.add_paragraph(f"   🔗 Maps: {link}", style='List Bullet')
+                
+                p_link = doc.add_paragraph(style='List Bullet')
+                r_link = p_link.add_run(f"Apri su Maps: {link}")
+                r_link.font.color.rgb = RGBColor(0, 0, 255)
+                r_link.font.underline = True
             
-            doc.add_paragraph("-" * 20) # Separatore visivo
+            doc.add_paragraph("_" * 40) # Separatore
 
-    # 3. Salva
-    doc.save(filename)
-    return filename
+    doc.save(filepath)
+    return filepath
