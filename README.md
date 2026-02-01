@@ -36,7 +36,7 @@ This project was developed as a practical case study based on concepts covered i
 
 ### 1. Clone the repository
 ```bash
-git clone [https://github.com/martinaspeciale/travel-agent-ai.git](https://github.com/martinaspeciale/travel-agent-ai.git)
+git clone git clone https://github.com/martinaspeciale/travel-agent-ai.git
 cd travel-agent-ai
 ```
 
