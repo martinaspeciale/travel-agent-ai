@@ -16,7 +16,7 @@ This project was developed as a practical case study based on concepts covered i
 | **Cognitive Architectures: Tree of Thoughts** (Slide 5) | Generating multiple options (A, B, C) and evaluating them before selection. | [**`nodes.py`**](./app/engine/nodes.py) (using [**`prompts.py`**](./app/engine/prompts.py)) generates 3 drafts and selects the best one. |
 | **Memory & State Management** (Slide 7, 16) | Maintaining context across steps (User input, drafts, feedback). | [**`state.py`**](./app/core/state.py) defines the `TravelAgentState` (TypedDict) which persists data in the graph. |
 | **Tool Use & Function Calling** (Slide 8) | Ability to act in the real world via deterministic APIs. | [**`maps.py`**](./app/tools/maps.py) integrates Google Maps API to fetch real places, addresses, and ratings. |
-| **The Artifact** (Slide 14) | The output is not just text, but a structured and usable object. | [**`publisher.py`**](./app/tools/publisher.py) generates an **HTML Report** with navigable links and a visual layout. |
+| **The Artifact** (Slide 14) | The output is not just text, but a structured and usable object. | [**`publisher.py`**](./app/tools/publisher.py) generates professional **Word (.docx)** and **HTML** reports. |
 | **Resilience & Self-Correction** (Slide 17) | Error handling and feedback loops if the result is invalid. | [**`graph.py`**](./app/graph.py) (Critic loop) and [**`utils.py`**](./app/core/utils.py) (robust JSON parsing). |
 | **Observability: "The Kitchen"** (Slide 18-19) | Monitoring the "thought process" (Reasoning) vs. Action. | [**`logger.py`**](./app/core/logger.py) tracks structured events (`THOUGHT` vs. `ACTION`) with color coding for debugging. |
 
@@ -27,7 +27,7 @@ This project was developed as a practical case study based on concepts covered i
 * **Tree of Thoughts Planning:** Rejects the first output; generates alternatives based on travel style (Relax, Cultural, Adventure).
 * **Critic-in-the-Loop:** A "Critic" node evaluates logistics (distances, timing) and rejects impossible itineraries, forcing the Planner to retry.
 * **Real-World Data:** Uses Google Maps Places API to find real addresses, ratings, and reviews (preventing location hallucinations).
-* **Structured Artifacts:** Automatically generates a `trip_destination.html` file with a visual itinerary and direct Google Maps links.
+* **Dual-Format Artifacts:** Automatically generates both a **Word Document (.docx)** for editing and an **HTML Report** with visual maps.
 * **Observability:** Real-time color-coded terminal logs show exactly what the AI is "thinking" and when it is using a tool.
 
 ---
@@ -101,7 +101,7 @@ travel-agent-ai/
 │   │   └── prompts.py  # System Prompts
 │   └── tools/          # Interface Layer
 │       ├── maps.py     # Google Maps API Wrapper
-│       └── publisher.py# HTML Report Generator
+│       └── publisher.py# Report Generator (HTML & DOCX)
 ├── requirements.txt    # Python Dependencies
 └── .env                # Environment Variables (API Keys)
 ```
