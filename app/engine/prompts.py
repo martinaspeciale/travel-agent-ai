@@ -1,34 +1,47 @@
 ROUTER_PROMPT = """
-Analizza: Destinazione {destination}, Interessi {interests}.
-Classifica in una di queste categorie: CULTURAL, RELAX, ADVENTURE.
-Spiega il PERCHÉ in una frase breve.
+Analizza la richiesta di viaggio seguente:
+"{user_input}"
 
-Rispondi in JSON: {{ "style": "...", "reasoning": "..." }}
-"""
-
-PLANNER_PROMPT = """
-Sei un Travel Architect esperto.
-Destinazione: {destination}
-Durata: {days} GIORNI (Tassativo).
-Stile: {style}
-
-{feedback_instruction}
-
-REGOLE FONDAMENTALI:
-1. La lista "schedule" deve avere ESATTAMENTE {days} stringhe.
-2. Ogni stringa deve descrivere ZONA e ATTIVITÀ MACRO (es: "Mattina: Montmartre...").
-3. NON mischiare zone lontane nello stesso giorno (Regola della Prossimità).
+Il tuo compito è determinare lo "Stile di Viaggio" più adatto.
+Scegli UNO tra: "RELAX", "AVVENTURA", "CULTURALE", "GASTRONOMICO", "LUSSO", "LOW COST".
 
 Rispondi in JSON:
 {{
-  "candidates": [
-    {{ 
-       "id": "A", 
-       "thought_process": "Ho scelto questa zona perché...", 
-       "schedule": ["Giorno 1: ...", "Giorno 2: ..."] 
-    }}
-  ]
+  "reasoning": "Spiegazione breve...",
+  "style": "STILE_SCELTO"
 }}
+"""
+
+PLANNER_PROMPT = """
+Sei un Travel Planner esperto. Crea un itinerario dettagliato per {destination} di {days} giorni.
+
+PROFILO:
+- Stile: {style}
+- Budget: {budget} (Scegli ristoranti/attività coerenti con questo budget)
+- Gruppo: {companion} (Adatta i ritmi per questo tipo di gruppo)
+
+{feedback_instruction}
+
+ISTRUZIONI OUTPUT:
+Non fare liste puntate generiche. Genera una struttura JSON precisa.
+Per ogni giorno, elenca 2-3 luoghi specifici (nomi precisi di musei, ristoranti, parchi).
+
+Rispondi SOLO con un JSON valido (senza markdown) che segua questa struttura esatta:
+[
+  {{
+    "day_number": 1,
+    "focus": "Tema del giorno (es. Arte e Storia)",
+    "places": [
+      {{ "name": "Nome Luogo 1", "address": "Zona o Indirizzo approssimativo" }},
+      {{ "name": "Nome Ristorante X", "address": "Zona centro" }}
+    ]
+  }},
+  {{
+    "day_number": 2,
+    "focus": "...",
+    "places": [...]
+  }}
+]
 """
 
 FINDER_QUERY_PROMPT = """
@@ -46,14 +59,13 @@ JSON: {{ "name": "...", "address": "...", "rating": "...", "desc": "Motivo scelt
 """
 
 CRITIC_PROMPT = """
-Sei una guida turistica severa.
-Itinerario: {itinerary}
+Analizza questo itinerario per {destination}:
+{itinerary}
 
-Analizza LOGICA e DISTANZE.
-Rispondi JSON:
+Verifica logistica, distanze e coerenza (es. non mandare un utente Low Cost in un ristorante a 3 stelle Michelin).
+Rispondi SOLO JSON:
 {{
-    "thought_process": "Analisi passo passo...",
-    "approved": true/false,
-    "critique": "Se false, spiega esattamente cosa cambiare."
+  "approved": true/false,
+  "critique": "Motivo del rifiuto (sii specifico)"
 }}
 """

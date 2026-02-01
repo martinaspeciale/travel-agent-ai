@@ -1,23 +1,33 @@
 from typing import TypedDict, List, Optional
 
-class PlaceInfo(TypedDict):
+# Struttura di un Luogo
+class PlaceInfo(TypedDict, total=False):
     name: str
     address: str
     rating: str
-    description: str
+    description: Optional[str]
 
+# Struttura di un Giorno
 class DayPlan(TypedDict):
     day_number: int
     focus: str
     places: List[PlaceInfo]
 
+# Stato dell'Agente
 class TravelAgentState(TypedDict):
+    # Input
+    user_input: str
     destination: str
-    days: int
+    days: str
     interests: str
+    budget: str
+    companion: str
+    
+    # Output
     travel_style: str
-    draft_schedule: List[str]
-    itinerary: List[DayPlan]
-    feedback: Optional[str]
+    itinerary: List[DayPlan]  
+    
+    # Controllo
+    critic_feedback: Optional[str]
     is_approved: bool
     retry_count: int
