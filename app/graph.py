@@ -1,6 +1,6 @@
 from langgraph.graph import StateGraph, END
-from state import TravelAgentState
-from nodes import (
+from app.core.state import TravelAgentState
+from app.engine.nodes import (
     init_node, travel_router_node, trip_planner_node, 
     places_finder_node, logistics_critic_node, publisher_node
 )

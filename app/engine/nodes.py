@@ -1,11 +1,11 @@
 import urllib.parse
 from langchain_core.messages import HumanMessage
-from state import TravelAgentState
-from model import llm
-from tools import find_places_on_maps
-from logger import logger
-from utils import safe_json_parse
-import prompts # Importiamo i prompt
+from app.core.state import TravelAgentState
+from app.core.model import llm
+from app.tools.maps import find_places_on_maps
+from app.core.logger import logger
+from app.core.utils import safe_json_parse, extract_json
+from app.engine import prompts
 
 # --- 1. INIT NODE ---
 def init_node(state: TravelAgentState):
@@ -120,8 +120,8 @@ def logistics_critic_node(state: TravelAgentState):
 
 # --- 6. PUBLISHER NODE ---
 def publisher_node(state: TravelAgentState):
-    from publisher_utils import generate_html_report, print_terminal_report
-    
+    from app.tools.publisher import generate_html_report, print_terminal_report
+        
     # 1. Stampa in chat
     print_terminal_report(state)
     
