@@ -2,7 +2,7 @@ import os
 import googlemaps
 from langchain_core.tools import tool
 from dotenv import load_dotenv
-from logger import logger
+from app.core.logger import logger
 
 load_dotenv()
 
