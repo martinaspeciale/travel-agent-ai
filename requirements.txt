@@ -1,6 +1,7 @@
 langchain>=0.1.0
 langchain-core
 langchain-groq
+langchain-mistralai
 langgraph
 python-dotenv
 googlemaps
