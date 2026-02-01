@@ -12,13 +12,13 @@ This project was developed as a practical case study based on concepts covered i
 
 | Theoretical Concept (Slide) | Description | Code Implementation |
 | :--- | :--- | :--- |
-| **Anatomy of an Agent** (Slide 4) | The agent is a system composed of Brain (LLM), Memory, Tools, and Planning. | **`nodes.py`** (Brain), **`state.py`** (Memory), **`tools.py`** (Tools). |
-| **Cognitive Architectures: Tree of Thoughts** (Slide 5) | Generating multiple options (A, B, C) and evaluating them before selection. | **`trip_planner_node`** in `nodes.py` (using `prompts.py`) generates 3 drafts and selects the best one. |
-| **Memory & State Management** (Slide 7, 16) | Maintaining context across steps (User input, drafts, feedback). | **`state.py`** defines the `TravelAgentState` (TypedDict) which persists data in the graph. |
-| **Tool Use & Function Calling** (Slide 8) | Ability to act in the real world via deterministic APIs. | **`tools.py`** integrates Google Maps API to fetch real places, addresses, and ratings. |
-| **The Artifact** (Slide 14) | The output is not just text, but a structured and usable object. | **`publisher_utils.py`** generates an **HTML Report** with navigable links and a visual layout. |
-| **Resilience & Self-Correction** (Slide 17) | Error handling and feedback loops if the result is invalid. | **`graph.py`** (Critic loop) and **`utils.py`** (robust JSON parsing with `safe_json_parse`). |
-| **Observability: "The Kitchen"** (Slide 18-19) | Monitoring the "thought process" (Reasoning) vs. Action. | **`logger.py`** tracks structured events (`THOUGHT` vs. `ACTION`) with color coding for debugging. |
+| **Anatomy of an Agent** (Slide 4) | The agent is a system composed of Brain (LLM), Memory, Tools, and Planning. | [**`nodes.py`**](./app/engine/nodes.py) (Brain), [**`state.py`**](./app/core/state.py) (Memory), [**`maps.py`**](./app/tools/maps.py) (Tools). |
+| **Cognitive Architectures: Tree of Thoughts** (Slide 5) | Generating multiple options (A, B, C) and evaluating them before selection. | [**`nodes.py`**](./app/engine/nodes.py) (using [**`prompts.py`**](./app/engine/prompts.py)) generates 3 drafts and selects the best one. |
+| **Memory & State Management** (Slide 7, 16) | Maintaining context across steps (User input, drafts, feedback). | [**`state.py`**](./app/core/state.py) defines the `TravelAgentState` (TypedDict) which persists data in the graph. |
+| **Tool Use & Function Calling** (Slide 8) | Ability to act in the real world via deterministic APIs. | [**`maps.py`**](./app/tools/maps.py) integrates Google Maps API to fetch real places, addresses, and ratings. |
+| **The Artifact** (Slide 14) | The output is not just text, but a structured and usable object. | [**`publisher.py`**](./app/tools/publisher.py) generates an **HTML Report** with navigable links and a visual layout. |
+| **Resilience & Self-Correction** (Slide 17) | Error handling and feedback loops if the result is invalid. | [**`graph.py`**](./app/graph.py) (Critic loop) and [**`utils.py`**](./app/core/utils.py) (robust JSON parsing). |
+| **Observability: "The Kitchen"** (Slide 18-19) | Monitoring the "thought process" (Reasoning) vs. Action. | [**`logger.py`**](./app/core/logger.py) tracks structured events (`THOUGHT` vs. `ACTION`) with color coding for debugging. |
 
 ---
 
@@ -67,10 +67,10 @@ API keys used to run the agent can be found here:
 
 ## Usage
 
-Run the agent from the terminal:
+Run the agent from the terminal using the main entry point:
 
 ```bash
-python graph.py
+python main.py
 ```
 
 Follow the on-screen instructions:
@@ -88,15 +88,20 @@ The agent will start the reasoning process (displayed in logs) and eventually ge
 
 ```text
 travel-agent-ai/
-├── graph.py            # Orchestrator (LangGraph Workflow)
-├── nodes.py            # Cognitive Nodes (Decision logic)
-├── prompts.py          # Centralized System Prompts (Router, Planner, Critic)
-├── tools.py            # Google Maps API Wrapper
-├── state.py            # Memory Definition (TypedDict)
-├── model.py            # LLM Configuration (Llama 3 via Groq)
-├── logger.py           # Observability System (Color-coded logs)
-├── utils.py            # Utilities for JSON cleaning and error handling
-├── publisher_utils.py  # Logic for generating HTML Reports and Maps links
+├── main.py             # Application Entry Point
+├── app/
+│   ├── graph.py        # Orchestrator (LangGraph Workflow)
+│   ├── core/           # Infrastructure Layer
+│   │   ├── state.py    # Memory Definition (TypedDict)
+│   │   ├── model.py    # LLM Configuration
+│   │   ├── logger.py   # Observability System
+│   │   └── utils.py    # Shared Utilities
+│   ├── engine/         # Cognitive Layer
+│   │   ├── nodes.py    # Decision Logic (Router, Planner, Critic)
+│   │   └── prompts.py  # System Prompts
+│   └── tools/          # Interface Layer
+│       ├── maps.py     # Google Maps API Wrapper
+│       └── publisher.py# HTML Report Generator
 ├── requirements.txt    # Python Dependencies
 └── .env                # Environment Variables (API Keys)
 ```
