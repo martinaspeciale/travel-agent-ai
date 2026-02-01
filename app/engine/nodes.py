@@ -93,7 +93,13 @@ def places_finder_node(state: TravelAgentState):
             place_data = safe_json_parse(e_resp.content)
             
             if place_data:
-                day_places.append(place_data)
+                if isinstance(place_data, list):
+                    # Se l'LLM ha risposto con una lista (es. [place1, place2]), li aggiungiamo tutti
+                    day_places.extend(place_data)
+                elif isinstance(place_data, dict):
+                    # Se è un oggetto singolo --> append
+                    day_places.append(place_data)
+
 
         final_itinerary.append({"day_number": i, "focus": day_desc, "places": day_places})
         
@@ -121,7 +127,7 @@ def logistics_critic_node(state: TravelAgentState):
 # --- 6. PUBLISHER NODE ---
 def publisher_node(state: TravelAgentState):
     from app.tools.publisher import generate_html_report, print_terminal_report
-        
+
     # 1. Stampa in chat
     print_terminal_report(state)
     
