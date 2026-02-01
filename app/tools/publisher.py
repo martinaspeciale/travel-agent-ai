@@ -1,68 +1,101 @@
+import os
 import urllib.parse
 
-def generate_maps_link(places):
-    """Genera il link di Google Maps per una lista di luoghi."""
-    route_stops = []
-    for p in places:
-        target = p.get('address') or p.get('name')
-        if target:
-            route_stops.append(urllib.parse.quote(target))
+def generate_gmaps_search_link(name, address):
+    """Genera un link di ricerca robusto per Google Maps."""
+    if not name and not address:
+        return None
     
-    if route_stops:
-        return "http://googleusercontent.com/maps.google.com/maps/dir/" + "/".join(route_stops)
-    return None
+    # Combina nome e indirizzo per massima precisione
+    query = f"{name} {address}".strip()
+    
+    # Codifica la stringa (es. ' ' diventa '%20', 'ß' diventa '%C3%9F')
+    safe_query = urllib.parse.quote(query)
+    
+    # Usa l'API universale di ricerca (funziona sempre, niente 404)
+    return f"https://www.google.com/maps/search/?api=1&query={safe_query}"
 
 def print_terminal_report(state):
     print("\n" + "="*60)
-    print(f"✈️  ITINERARIO FINALE: {state['destination'].upper()}")
+    print(f"✈️  ITINERARIO FINALE: {state.get('destination', 'Viaggio').upper()}")
     print("="*60)
     
-    for day in state['itinerary']:
+    itinerary = state.get('itinerary', [])
+    
+    for day in itinerary:
         print(f"\n📅 Giorno {day['day_number']}: {day['focus']}")
         print("-" * 40)
         
-        for p in day['places']:
-            print(f"   📍 {p.get('name')} (⭐ {p.get('rating', 'N/A')})")
-            print(f"      🏠 {p.get('address')}")
-            print("      ---")
+        for p in day.get('places', []):
+            name = p.get('name', 'Senza nome')
+            rating = p.get('rating', 'N/A')
+            address = p.get('address', '')
             
-        link = generate_maps_link(day['places'])
-        if link:
-            print(f"   🗺️  Link Maps: {link}")
+            print(f"   📍 {name} (⭐ {rating})")
+            if address:
+                print(f"      🏠 {address}")
+            
+            # Genera link immediato anche nel terminale
+            link = generate_gmaps_search_link(name, address)
+            if link:
+                print(f"      🔗 Maps: {link}")
+            print("      ---")
 
 def generate_html_report(state):
-    dest = state['destination']
-    filename = f"viaggio_{dest.replace(' ', '_')}.html"
+    dest = state.get('destination', 'Viaggio')
+    # Nome file sicuro (senza spazi)
+    filename = f"viaggio_{dest.replace(' ', '_').lower()}.html"
     
     html = f"""
     <!DOCTYPE html>
     <html>
     <head>
         <title>Viaggio a {dest}</title>
+        <meta charset="utf-8">
         <style>
-            body {{ font-family: sans-serif; padding: 20px; background: #f4f4f9; }}
-            .card {{ background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }}
-            h1 {{ color: #2c3e50; text-align: center; }}
-            .btn {{ display: block; background: #27ae60; color: white; padding: 10px; text-align: center; text-decoration: none; border-radius: 5px; margin-top: 10px; }}
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f0f2f5; color: #333; }}
+            h1 {{ color: #2c3e50; text-align: center; margin-bottom: 30px; }}
+            .day-card {{ background: white; padding: 25px; margin-bottom: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+            .day-title {{ color: #e67e22; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }}
+            .place {{ margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3498db; }}
+            .place-name {{ font-weight: bold; font-size: 1.1em; }}
+            .place-rating {{ color: #f1c40f; }}
+            .btn-map {{ display: inline-block; background: #3498db; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 0.9em; margin-top: 5px; }}
+            .btn-map:hover {{ background: #2980b9; }}
         </style>
     </head>
     <body>
-        <h1>✈️ {dest.upper()}</h1>
+        <h1>✈️ Itinerario: {dest.upper()}</h1>
     """
     
-    for day in state['itinerary']:
-        html += f"<div class='card'><h2>📅 Giorno {day['day_number']}</h2><ul>"
-        for p in day['places']:
-            html += f"<li><b>{p.get('name')}</b> (⭐ {p.get('rating', 'N/A')})<br>{p.get('address')}</li>"
-        html += "</ul>"
+    for day in state.get('itinerary', []):
+        html += f"""
+        <div class='day-card'>
+            <h2 class='day-title'>📅 Giorno {day['day_number']}: {day['focus']}</h2>
+        """
         
-        link = generate_maps_link(day['places'])
-        if link:
-            html += f"<a href='{link}' class='btn' target='_blank'>🗺️ Apri Mappa</a>"
+        for p in day.get('places', []):
+            name = p.get('name', 'Nome non disp.')
+            address = p.get('address', '')
+            rating = p.get('rating', 'N/A')
+            link = generate_gmaps_search_link(name, address)
+            
+            html += f"""
+            <div class='place'>
+                <div class='place-name'>{name} <span class='place-rating'>★ {rating}</span></div>
+                <div style='color: #666; font-size: 0.9em; margin: 4px 0;'>{address}</div>
+            """
+            
+            if link:
+                html += f"<a href='{link}' class='btn-map' target='_blank'>📍 Vedi su Google Maps</a>"
+            
+            html += "</div>"
+            
         html += "</div>"
         
     html += "</body></html>"
     
+    # Scrittura file con encoding UTF-8 per supportare emoji e caratteri speciali
     with open(filename, "w", encoding="utf-8") as f:
         f.write(html)
         
