@@ -126,15 +126,18 @@ def logistics_critic_node(state: TravelAgentState):
 
 # --- 6. PUBLISHER NODE ---
 def publisher_node(state: TravelAgentState):
-    from app.tools.publisher import generate_html_report, print_terminal_report
+    from app.tools.publisher import generate_html_report, print_terminal_report, generate_docx_report
 
     # 1. Stampa in chat
     print_terminal_report(state)
     
     # 2. Genera HTML
-    filename = generate_html_report(state)
-    
+    html_file = generate_html_report(state)
+
+    # 3. Genera WORD
+    docx_file = generate_docx_report(state)
+
     print("\n" + "="*60)
-    print(f"💾 FILE SALVATO: {filename}")
+    print(f"\n📄 Report salvati: \n   - {html_file}\n   - {docx_file}")
     print("="*60)
-    return {}
+    return state

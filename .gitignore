@@ -1,5 +1,7 @@
 __pycache__/
 .env
 venv/
+outputs/
 *.html
+*.docx
 .DS_Store
