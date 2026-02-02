@@ -8,6 +8,8 @@ from app.tools.maps import find_places_on_maps
 from app.core.logger import logger
 from app.core.utils import safe_json_parse
 from app.engine import prompts
+from app.core.utils import extract_budget_number
+from app.tools.search import search_prices_tool
 
 init(autoreset=True)
 
@@ -106,6 +108,18 @@ def trip_planner_node(state: TravelAgentState):
 def places_finder_node(state: TravelAgentState):
     logger.log_event("FINDER", "START", "Verifica Luoghi con Tool Maps")
     
+    total_budget = extract_budget_number(state['budget'])
+    num_days = int(state['days']) if state['days'].isdigit() else 1
+    daily_budget = total_budget / num_days
+
+    # SOGLIA DI ROBUSTEZZA: Sotto i 70€ al giorno è considerato 'Budget Critico'
+    budget_context = ""
+    if daily_budget < 70:
+        logger.log_event("FINDER", "WARNING", f"Budget critico rilevato: {daily_budget}€/giorno. Uso Tavily.")
+        # Usiamo Tavily per trovare opzioni gratuite nella destinazione
+        query = f"free things to do and cheap eats in {state['destination']}"
+        budget_context = search_prices_tool(query)
+
     updated_itinerary = []
     
     for day in state.get('itinerary', []):
@@ -146,7 +160,7 @@ def places_finder_node(state: TravelAgentState):
         day['places'] = validated_places
         updated_itinerary.append(day)
         
-    return {"itinerary": updated_itinerary}
+    return {"budget_context": budget_context, "itinerary": updated_itinerary}
 
 # --- 5. CRITIC NODE ---
 def logistics_critic_node(state: TravelAgentState):
