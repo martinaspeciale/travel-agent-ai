@@ -29,6 +29,7 @@ class TravelAgentState(TypedDict):
     
     # Controllo
     critic_feedback: Optional[str]
+    budget_context: Optional[str]
     confidence_score: float
     is_approved: bool
     retry_count: int
