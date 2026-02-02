@@ -15,6 +15,7 @@ def find_places_on_maps(query: str):
     Cerca luoghi reali su Google Maps. 
     Ritorna una lista di risultati strutturati per il Finder.
     """
+    logger.log_tool("GOOGLE_MAPS", f"Verifica posizione e rating per: {query}")
     if not gmaps:
         return []
 

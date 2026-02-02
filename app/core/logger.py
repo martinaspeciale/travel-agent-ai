@@ -99,36 +99,58 @@ class TravelLogger:
     def log_event(self, node_name, event_type, message):
         timestamp = datetime.now().strftime("%H:%M:%S")
         
+        # Tavolozza 
         colors = {
-            "ROUTER": Fore.MAGENTA, "PLANNER": Fore.CYAN, 
-            "FINDER": Fore.BLUE, "CRITIC": Fore.YELLOW, 
-            "PUBLISHER": Fore.GREEN, "ERROR": Fore.RED,
-            "INIT": Fore.WHITE
+            "ROUTER": Fore.GREEN,                   # Verde Classico
+            "PLANNER": Fore.CYAN,                   # Blu Terminale
+            "FINDER": Style.BRIGHT + Fore.GREEN,    # Verde Brillante
+            "CRITIC": Fore.YELLOW,                  # Ambra (Attenzione)
+            "PUBLISHER": Fore.GREEN, 
+            "ERROR": Fore.RED,                      # Allarme Rosso
+            "INIT": Style.DIM + Fore.GREEN          # Fosforo sbiadito
         }
-        color = colors.get(node_name, Fore.WHITE)
+        color = colors.get(node_name, Fore.GREEN)
         
         icons = {
-            "THOUGHT": "🧠", "ACTION": "🛠️", "INFO": "►", 
-            "ERROR": "⚠️", "RESULT": "✅", "START": "🚦"
+            "THOUGHT": "[?]",   # Riflessione / Calcolo
+            "ACTION": "==>",    # Esecuzione comando
+            "INFO": " * ",      # Stato
+            "ERROR": "[!]",     # Interruzione critica
+            "RESULT": "[+]",    # Successo
+            "START": ">>>"      # Boot del nodo
         }
-        icon = icons.get(event_type, "•")
+        icon = icons.get(event_type, " - ")
         
-        # 1. Prepariamo l'intestazione (Timestamp, Nodo, Icona)
-        header = f"{color}[{timestamp}] --- {node_name} ---\n   {icon} [{event_type}] "
-        print(header, end="") # 'end=""' evita di andare a capo subito
+        # 1. Prepariamo l'intestazione
+        header = f"{color}[{timestamp}] {node_name} {icon} [{event_type}] "
+        print(header, end="") 
         
-        # 2. Effetto Typing Live solo sul messaggio
+        # 2. Effetto Typing Live 
         for char in message:
             sys.stdout.write(char)
             sys.stdout.flush()
-            # Velocità: THOUGHT un po' più lento (riflessivo), gli altri più rapidi
-            delay = 0.02 if event_type == "THOUGHT" else 0.005
+            # Il 'pensiero' dell'agente scritto lentamente
+            delay = 0.03 if event_type == "THOUGHT" else 0.01
             time.sleep(delay + random.uniform(0, 0.01))
         
-        # 3. Chiudiamo il colore e andiamo a capo
-        print(f"{Style.RESET_ALL}\n")
+        # 3. Chiusura riga
+        print(f"{Style.RESET_ALL}")
         
-        # 4. Scrittura su file (rimane istantanea, senza colori)
-        self._write(f"[{timestamp}] --- {node_name} ---\n   {icon} [{event_type}] {message}")
+        # 4. Scrittura su file (mantiene la traccia pulita per il debugging)
+        self._write(f"[{timestamp}] --- {node_name} --- {icon} [{event_type}] {message}")
+
+    def log_tool(self, tool_name, action_desc):
+        """Log specifico per l'attivazione dei Tool"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        color = Fore.BLUE  # Colore standard per i Tool
+        
+        header = f"{color}[{timestamp}] TOOL [{tool_name}] ==> "
+        print(header, end="")
+        
+        # Typing live per la descrizione dell'azione
+        typing_print(action_desc, speed=0.01)
+        
+        # Scrittura su file
+        self._write(f"[{timestamp}] TOOL [{tool_name}] ==> {action_desc}")
 
 logger = TravelLogger()

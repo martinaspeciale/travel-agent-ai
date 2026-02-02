@@ -31,26 +31,26 @@ def generate_gmaps_search_link(name, address):
 
 def print_terminal_report(state):
     print("\n" + "="*60)
-    print(f"✈️  ITINERARIO FINALE: {state.get('destination', 'Viaggio').upper()}")
+    print(f" >>> ITINERARIO FINALE: {state.get('destination', 'Viaggio').upper()}")
     print("="*60)
     
     itinerary = state.get('itinerary', [])
     for day in itinerary:
-        print(f"\n📅 Giorno {day['day_number']}: {day['focus']}")
+        print(f"\n [+] Giorno {day['day_number']}: {day['focus']}")
         print("-" * 40)
         for p in day.get('places', []):
             name = p.get('name', 'Senza nome')
             rating = p.get('rating', 'N/A')
             address = p.get('address', '')
             
-            print(f"   📍 {name} (⭐ {rating})")
+            print(f"   [o] {name} (Score: {rating})") 
             if address:
-                print(f"      🏠 {address}")
+                print(f"       Addr: {address}")
             
             link = generate_gmaps_search_link(name, address)
             if link:
-                print(f"      🔗 Maps: {link}")
-            print("      ---")
+                print(f"       Link: {link}")
+            print("       " + "." * 20)
 
 def generate_html_report(state):
     """Genera un report HTML visivamente ricco."""

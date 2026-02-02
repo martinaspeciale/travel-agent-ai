@@ -117,6 +117,7 @@ def places_finder_node(state: TravelAgentState):
     if daily_budget < 70:
         logger.log_event("FINDER", "WARNING", f"Budget critico rilevato: {daily_budget}€/giorno. Uso Tavily.")
         # Usiamo Tavily per trovare opzioni gratuite nella destinazione
+        logger.log_tool("TAVILY", f"Ricerca attività low-cost a {state['destination']}...")
         query = f"free things to do and cheap eats in {state['destination']}"
         budget_context = search_prices_tool(query)
 
@@ -177,10 +178,12 @@ def logistics_critic_node(state: TravelAgentState):
     data = safe_json_parse(response.content, default_value={"approved": True})
     
     if data.get('approved'):
-        logger.log_event("CRITIC", "RESULT", "✅ Approvato")
+        # Usiamo 'RESULT' per il successo (+)
+        logger.log_event("CRITIC", "RESULT", "[+] Approvato: L'itinerario rispetta i vincoli logistici e di budget.")
         return {"is_approved": True, "critic_feedback": None}
     else:
-        logger.log_event("CRITIC", "WARNING", f"❌ Bocciato: {data.get('critique')}")
+        # Usiamo 'ERROR' o 'WARNING' per la bocciatura [!]
+        logger.log_event("CRITIC", "ERROR", f"[!] Bocciato: {data.get('critique')}")
         return {"is_approved": False, "critic_feedback": data.get('critique')}
 
 # --- 6. PUBLISHER NODE ---
