@@ -168,7 +168,9 @@ def logistics_critic_node(state: TravelAgentState):
     
     formatted_prompt = prompts.CRITIC_PROMPT.format(
         destination=state['destination'],
-        itinerary=json.dumps(state['itinerary'], indent=2)
+        itinerary=json.dumps(state['itinerary'], indent=2),
+        budget=state.get('budget', 'Non specificato'),                  
+        budget_context=state.get('budget_context', 'Nessun dato extra')
     )
     
     response = llm.invoke([HumanMessage(content=formatted_prompt)])

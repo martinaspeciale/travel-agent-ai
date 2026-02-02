@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+
 def search_prices_tool(query: str):
     """
     Cerca su internet i prezzi attuali e consigli per risparmiare.
@@ -12,7 +14,7 @@ def search_prices_tool(query: str):
     try:
         # Cerchiamo informazioni specifiche sui costi
         search_query = f"ticket prices and free things to do {query}"
-        results = tavily.search(query=search_query, max_results=2)
+        results = tavily_client.search(query=search_query, max_results=2)
         
         context = ""
         for res in results['results']:
