@@ -19,6 +19,10 @@ This project was developed as a practical case study based on concepts covered i
 | **The Artifact** (Slide 14) | The output is not just text, but a structured and usable object. | [**`publisher.py`**](./app/tools/publisher.py) generates professional **Word (.docx)** and **HTML** reports. |
 | **Resilience & Self-Correction** (Slide 17) | Error handling and feedback loops if the result is invalid. | [**`graph.py`**](./app/graph.py) (Critic loop) and [**`utils.py`**](./app/core/utils.py) (robust JSON parsing). |
 | **Observability: "The Kitchen"** (Slide 18-19) | Monitoring the "thought process" (Reasoning) vs. Action. | [**`logger.py`**](./app/core/logger.py) tracks structured events (`THOUGHT` vs. `ACTION`) with color coding for debugging. |
+| **Grounding & Tools** | Using external search engines to anchor the LLM to real-world facts (prices, updates). | [**`search.py`**](./app/tools/search.py) integrates **Tavily API** for real-time price verification. |
+| **Metacognition** | The agent evaluates its own confidence before acting to prevent hallucinations. | [**`nodes.py`**](./app/engine/nodes.py) calculates a `confidence_score` based on budget/destination constraints. |
+| **Human-in-the-Loop (HITL)** | Manual intervention when the agent is uncertain or the plan is rejected. | [**`graph.py`**](./app/graph.py) implements an interruption point (`ask_human`) when confidence is < 0.7. |
+| **Robustness** | Managing edge cases like extreme budgets, multipliers, or ambiguous inputs. | [**`utils.py`**](./app/core/utils.py) implements regex-based budget parsing (e.g., "100k", "1 milione"). |
 
 ---
 
@@ -57,6 +61,7 @@ Create a `.env` file in the project root and add your keys:
 GROQ_API_KEY=gsk_...
 GOOGLE_MAPS_API_KEY=AIza...
 # MISTRAL_API_KEY=... (Optional fallback)
+TAVILY_API_KEY=tvly-...
 ```
 API keys used to run the agent can be found here:
 * **Groq API:** [console.groq.com](https://console.groq.com/keys)
@@ -74,13 +79,16 @@ python main.py
 ```
 
 Follow the on-screen instructions:
-1.  Enter **Destination** (e.g., "Tokyo").
-2.  Enter **Days** (e.g., "3").
-3.  Enter **Interests** (e.g., "Anime, Sushi, Ancient Temples").
+1.  Enter **Destination** 
+2.  Enter **Days** 
+3.  Enter **Interests** 
+4.  Enter **Budget**
+5.  Enter **Travelers**
 
 The agent will start the reasoning process (displayed in logs) and eventually generate:
 1.  A detailed itinerary in the terminal.
 2.  An HTML file in the project folder.
+3.  A Word Document (.docx) 
 
 ---
 
@@ -101,10 +109,35 @@ travel-agent-ai/
 │   │   └── prompts.py  # System Prompts
 │   └── tools/          # Interface Layer
 │       ├── maps.py     # Google Maps API Wrapper
+│       ├── search.py   # Tavily API Wrapper (Price Grounding)
 │       └── publisher.py# Report Generator (HTML & DOCX)
 ├── requirements.txt    # Python Dependencies
 └── .env                # Environment Variables (API Keys)
 ```
+
+## Test Scenarios & Edge Cases
+
+These scenarios are designed to stress-test the architecture and demonstrate the core pillars of **Robustness** and **Metacognition**.
+
+### 1. The "Survival" Test (Extreme Budget)
+* **Input:** `Venezia, 2 days, 30 EUR, Couple`
+* **Purpose:** Verifies **Safety & Grounding**. 
+* **Expected Behavior:** The **Critic** must reject expensive attractions (e.g., Doge's Palace) using real-time **Tavily** data. It forces the **Planner** to pivot toward free activities like the *Rialto Market* or walking tours to stay within the €15/day limit.
+
+### 2. The "Ambiguity" Test (Human-in-the-Loop)
+* **Input:** `An exotic place, 5 days, Medium, Solo`
+* **Purpose:** Verifies **Metacognition & HITL**.
+* **Expected Behavior:** Due to the missing destination, the agent assigns a `confidence_score < 0.7`. It triggers the `ask_human_node`, pausing the graph execution to ask the user for clarification before wasting API tokens.
+
+### 3. The "Millionaire" Test (Robust Parsing)
+* **Input:** `Dubai, 3 days, 100k, Luxury, Family`
+* **Purpose:** Verifies **Robustness & Efficiency**.
+* **Expected Behavior:** The `extract_budget_number` utility must correctly parse "100k" into `100000.0`. The system bypasses low-budget web searches (Efficiency) and focuses on high-end hospitality and exclusive experiences.
+
+### 4. The "Teleportation" Test (Logical Reasoning)
+* **Input:** `Tokyo and New York, 1 day, Luxury, Solo`
+* **Purpose:** Verifies **Logical Consistency**.
+* **Expected Behavior:** Even with an unlimited budget, the **Critic** must reject the itinerary. It identifies the physical impossibility of visiting both cities in 24 hours, demonstrating that the agent understands spatial and temporal constraints beyond simple text generation.
 
 ---
 
