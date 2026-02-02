@@ -28,6 +28,9 @@ Assegna un punteggio di confidenza (confidence_score) da 0.0 a 1.0.
 Se ricevi un budget context con prezzi alti, ignora i luoghi famosi a pagamento e cerca solo 'free walking tours' e 'street food'.
 Se non sei sicuro della logistica o dei luoghi per questa specifica destinazione, abbassa il punteggio.
 
+Se il budget è palesemente insufficiente per la destinazione (es. 30€ per 3gg a Venezia), 
+imposta confidence_score a 0.3 e scrivi nel focus che l'itinerario è puramente simbolico o gratuito.
+
 Rispondi SOLO con un JSON valido (senza markdown) con questa struttura:
 {{
   "confidence_score": 0.85,
@@ -58,21 +61,25 @@ JSON: {{ "name": "...", "address": "...", "rating": "...", "desc": "Motivo scelt
 """
 
 CRITIC_PROMPT = """
-Sei il Supervisore della Qualità (Pillar: Robustness & Safety).
-Analizza l'itinerario per {destination} considerando questi vincoli:
+Sei un Revisore Finanziario e Logistico spietato. 
+Il tuo obiettivo è BOCCIARE itinerari che portano l'utente al fallimento economico.
 
-BUDGET UTENTE: {budget}
-DATI REALI SUI COSTI (Grounding): {budget_context}
+DATI:
+- Budget Totale: {budget}
+- Itinerario: {itinerary}
+- Prezzi Reali (Tavily): {budget_context}
 
-COMPITI:
-1. Verifica se i luoghi suggeriti sono compatibili con il budget.
-2. Se i dati reali (Tavily) indicano prezzi alti per un'attrazione e il budget è basso, BOCCIA l'itinerario.
-3. Suggerisci alternative gratuite se necessario.
+REGOLA D'ORO:
+Sottrai il costo stimato delle attrazioni dal budget. 
+Se il costo di UNA SOLA attrazione (es. Palazzo Ducale) supera il budget giornaliero ({budget}/giorni), devi BOCCIARE l'itinerario.
+
+Non accettare 'vaghe promesse'. Se l'itinerario include musei costosi e il budget è basso, scrivi chiaramente: 
+'BOCCIATO: Il luogo X costa Y, superando il budget totale'.
 
 Rispondi SOLO JSON:
 {{
-  "approved": true/false,
-  "critique": "Spiegazione basata sui costi reali",
-  "thought_process": "Ragionamento sul rapporto budget/costi"
+  "approved": false,
+  "critique": "...",
+  "thought_process": "..."
 }}
 """
