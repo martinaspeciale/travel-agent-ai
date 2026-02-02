@@ -22,26 +22,24 @@ PROFILO:
 
 {feedback_instruction}
 
-ISTRUZIONI OUTPUT:
-Non fare liste puntate generiche. Genera una struttura JSON precisa.
-Per ogni giorno, elenca 2-3 luoghi specifici (nomi precisi di musei, ristoranti, parchi).
+AUTOTEST DI AFFIDABILITÀ:
+Valuta la logistica e la coerenza delle tue scelte. 
+Assegna un punteggio di confidenza (confidence_score) da 0.0 a 1.0. 
+Se non sei sicuro della logistica o dei luoghi per questa specifica destinazione, abbassa il punteggio.
 
-Rispondi SOLO con un JSON valido (senza markdown) che segua questa struttura esatta:
-[
-  {{
-    "day_number": 1,
-    "focus": "Tema del giorno (es. Arte e Storia)",
-    "places": [
-      {{ "name": "Nome Luogo 1", "address": "Zona o Indirizzo approssimativo" }},
-      {{ "name": "Nome Ristorante X", "address": "Zona centro" }}
-    ]
-  }},
-  {{
-    "day_number": 2,
-    "focus": "...",
-    "places": [...]
-  }}
-]
+Rispondi SOLO con un JSON valido (senza markdown) con questa struttura:
+{{
+  "confidence_score": 0.85,
+  "itinerary": [
+    {{
+      "day_number": 1,
+      "focus": "Tema del giorno",
+      "places": [
+        {{ "name": "Nome Luogo 1", "address": "Indirizzo" }}
+      ]
+    }}
+  ]
+}}
 """
 
 FINDER_QUERY_PROMPT = """
