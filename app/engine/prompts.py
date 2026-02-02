@@ -57,13 +57,21 @@ JSON: {{ "name": "...", "address": "...", "rating": "...", "desc": "Motivo scelt
 """
 
 CRITIC_PROMPT = """
-Analizza questo itinerario per {destination}:
-{itinerary}
+Sei il Supervisore della Qualità (Pillar: Robustness & Safety).
+Analizza l'itinerario per {destination} considerando questi vincoli:
 
-Verifica logistica, distanze e coerenza (es. non mandare un utente Low Cost in un ristorante a 3 stelle Michelin).
+BUDGET UTENTE: {budget}
+DATI REALI SUI COSTI (Grounding): {budget_context}
+
+COMPITI:
+1. Verifica se i luoghi suggeriti sono compatibili con il budget.
+2. Se i dati reali (Tavily) indicano prezzi alti per un'attrazione e il budget è basso, BOCCIA l'itinerario.
+3. Suggerisci alternative gratuite se necessario.
+
 Rispondi SOLO JSON:
 {{
   "approved": true/false,
-  "critique": "Motivo del rifiuto (sii specifico)"
+  "critique": "Spiegazione basata sui costi reali",
+  "thought_process": "Ragionamento sul rapporto budget/costi"
 }}
 """
