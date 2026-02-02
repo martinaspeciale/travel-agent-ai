@@ -49,40 +49,58 @@ def travel_router_node(state: TravelAgentState):
 
 # --- 3. PLANNER NODE (RIFATTO) ---
 def trip_planner_node(state: TravelAgentState):
-    logger.log_event("PLANNER", "START", "Pianificazione Itinerario")
+    logger.log_event("PLANNER", "START", "Pianificazione con Autovalutazione")
     
-    feedback = state.get("critic_feedback") # Nota: critic_feedback coerente con lo state
+    feedback = state.get("critic_feedback")
     feedback_instr = ""
     if feedback:
         logger.log_event("PLANNER", "WARNING", f"Feedback Critic: {feedback}")
         feedback_instr = f"CORREGGI L'ITINERARIO PRECEDENTE BASANDOTI SU QUESTO ERRORE: {feedback}"
 
-    budget = state.get('budget', 'Medio')
-    companion = state.get('companion', 'Solo')
-    
     formatted_prompt = prompts.PLANNER_PROMPT.format(
         destination=state['destination'],
         days=state['days'],
         style=state['travel_style'],
-        budget=budget,
-        companion=companion,
+        budget=state.get('budget', 'Medio'),
+        companion=state.get('companion', 'Solo'),
         feedback_instruction=feedback_instr
     )
     
     # Chiamata LLM
     response = llm.invoke([HumanMessage(content=formatted_prompt)])
     
-    # Parsing Diretto dell'Itinerario
-    itinerary_data = safe_json_parse(response.content)
+    # Parsing del nuovo formato JSON (che ora include confidence_score e itinerary)
+    data = safe_json_parse(response.content)
     
+    # Estrazione sicura dei dati
+    itinerary_data = data.get("itinerary", [])
+    confidence = data.get("confidence_score", 0.0)
+    
+    logger.log_event("PLANNER", "INFO", f"Confidenza Agente: {confidence}")
+
+    # --- IMPLEMENTAZIONE HITL ---
+    # Se la confidenza è < 0.7, forziamo il blocco dell'approvazione automatica
+    is_low_confidence = confidence < 0.7
+    
+    if is_low_confidence:
+        logger.log_event("PLANNER", "WARNING", f"⚠️ Confidenza Bassa ({confidence}). Richiesta revisione manuale.")
+        # Impostiamo un feedback che il Critic o l'interfaccia useranno per fermare il flusso
+        status_feedback = f"REVISIONE RICHIESTA: L'agente ha una confidenza di solo {confidence}."
+    else:
+        status_feedback = state.get("critic_feedback")
+
+    # Fallback se il JSON è malformato
     if not itinerary_data or not isinstance(itinerary_data, list):
         logger.log_event("PLANNER", "ERROR", "JSON non valido, uso fallback.")
-
         itinerary_data = [{"day_number": 1, "focus": "Esplorazione", "places": [{"name": f"Centro {state['destination']}", "address": ""}]}]
 
-    logger.log_event("PLANNER", "THOUGHT", f"Generata bozza con {len(itinerary_data)} giorni.")
-    
-    return {"itinerary": itinerary_data, "retry_count": state.get("retry_count", 0) + 1}
+    return {
+        "itinerary": itinerary_data, 
+        "confidence_score": confidence,          # Salviamo lo score nello stato
+        "is_approved": not is_low_confidence,    # Se la confidenza è bassa, NON è approvato
+        "critic_feedback": status_feedback,
+        "retry_count": state.get("retry_count", 0) + 1
+    }
 
 # --- 4. FINDER NODE ---
 def places_finder_node(state: TravelAgentState):
@@ -161,3 +179,14 @@ def publisher_node(state: TravelAgentState):
     print(f"\n📄 Report salvati in 'outputs/': \n   - {os.path.basename(html_file)}\n   - {os.path.basename(docx_file)}")
     print("="*60)
     return state
+
+def ask_human_node(state: TravelAgentState):
+    logger.log_event("SYSTEM", "WARNING", f"CONFIDENZA BASSA ({state.get('confidence_score')})")
+    print(Fore.YELLOW + "\n⚠️  L'AI non è sicura dell'itinerario generato.")
+    scelta = input(Fore.WHITE + "Vuoi procedere comunque? (s/n): ").lower().strip()
+    
+    if scelta == 's':
+        return {"is_approved": True, "critic_feedback": None}
+    else:
+        motivo = input("Cosa non va? Lascia un feedback per l'AI: ")
+        return {"is_approved": False, "critic_feedback": motivo, "retry_count": state.get("retry_count", 0) + 1}
