@@ -1,8 +1,12 @@
 import os
 import re
+import sys
+import time
+import random
 import inspect
 from datetime import datetime
 from colorama import Fore, Style, init
+from app.core.utils import typing_print
 
 # Inizializza colorama
 init(autoreset=True)
@@ -91,7 +95,7 @@ class TravelLogger:
         # Output File
         self._write(f"[{timestamp}] --- {node_name} ---\n   {level_icon} {msg}")
 
-    # --- Metodo Legacy (Tutto colorato) ---
+    # --- Metodo Legacy ---
     def log_event(self, node_name, event_type, message):
         timestamp = datetime.now().strftime("%H:%M:%S")
         
@@ -109,10 +113,22 @@ class TravelLogger:
         }
         icon = icons.get(event_type, "•")
         
-        # Stampa TUTTO colorato
-        full_text = f"{color}[{timestamp}] --- {node_name} ---\n   {icon} [{event_type}] {message}{Style.RESET_ALL}"
+        # 1. Prepariamo l'intestazione (Timestamp, Nodo, Icona)
+        header = f"{color}[{timestamp}] --- {node_name} ---\n   {icon} [{event_type}] "
+        print(header, end="") # 'end=""' evita di andare a capo subito
         
-        print(f"{full_text}\n")
+        # 2. Effetto Typing Live solo sul messaggio
+        for char in message:
+            sys.stdout.write(char)
+            sys.stdout.flush()
+            # Velocità: THOUGHT un po' più lento (riflessivo), gli altri più rapidi
+            delay = 0.02 if event_type == "THOUGHT" else 0.005
+            time.sleep(delay + random.uniform(0, 0.01))
+        
+        # 3. Chiudiamo il colore e andiamo a capo
+        print(f"{Style.RESET_ALL}\n")
+        
+        # 4. Scrittura su file (rimane istantanea, senza colori)
         self._write(f"[{timestamp}] --- {node_name} ---\n   {icon} [{event_type}] {message}")
 
 logger = TravelLogger()

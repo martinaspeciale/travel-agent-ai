@@ -1,5 +1,8 @@
 import json
 import re
+import sys
+import time
+import random
 
 def extract_json(text: str) -> str:
     """
@@ -59,3 +62,13 @@ def extract_budget_number(budget_str: str) -> float:
             break # Evita di moltiplicare due volte (es. 'm' è in 'milione')
             
     return number
+
+
+def typing_print(text, speed=0.01):
+    """Stampa il testo con un effetto 'typing' live."""
+    for char in text:
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        # Aggiungiamo variabilità per renderlo più 'umano'
+        time.sleep(speed + random.uniform(0, 0.005))
+    print() # Va a capo alla fine
