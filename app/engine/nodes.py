@@ -53,6 +53,10 @@ def travel_router_node(state: TravelAgentState):
 def trip_planner_node(state: TravelAgentState):
     logger.log_event("PLANNER", "START", "Pianificazione con Autovalutazione")
     
+    if state.get("critic_feedback"):
+        # Iniettiamo un comando di "Cambio Rotta"
+        feedback = f"\n[!] ATTENZIONE: Il piano precedente è stato BOCCIATO. Non riproporre le stesse attrazioni. Cambia tipologia di luoghi."
+
     feedback = state.get("critic_feedback")
     feedback_instr = ""
     if feedback:

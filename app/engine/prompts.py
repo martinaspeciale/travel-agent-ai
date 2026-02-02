@@ -73,9 +73,10 @@ REGOLA D'ORO:
 Sottrai il costo stimato delle attrazioni dal budget. 
 Se il costo di UNA SOLA attrazione (es. Palazzo Ducale) supera il budget giornaliero ({budget}/giorni), devi BOCCIARE l'itinerario.
 
-Non accettare 'vaghe promesse'. Se l'itinerario include musei costosi e il budget è basso, scrivi chiaramente: 
-'BOCCIATO: Il luogo X costa Y, superando il budget totale'.
-
+ISTRUZIONI CRITIC:
+1. Sii preciso: se un'attrazione è una piazza pubblica (es. Jackson Square), non inventare costi di ingresso.
+2. Se bocci un itinerario, DEVI suggerire una categoria alternativa (es. 'Suggerisci attività gratuite' o 'Cerca cibo da strada').
+s
 Rispondi SOLO JSON:
 {{
   "approved": false,
