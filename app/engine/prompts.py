@@ -25,6 +25,7 @@ PROFILO:
 AUTOTEST DI AFFIDABILITÀ:
 Valuta la logistica e la coerenza delle tue scelte. 
 Assegna un punteggio di confidenza (confidence_score) da 0.0 a 1.0. 
+Se ricevi un budget context con prezzi alti, ignora i luoghi famosi a pagamento e cerca solo 'free walking tours' e 'street food'.
 Se non sei sicuro della logistica o dei luoghi per questa specifica destinazione, abbassa il punteggio.
 
 Rispondi SOLO con un JSON valido (senza markdown) con questa struttura:
