@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import uuid
 import time
 import random
 import inspect
@@ -13,6 +14,10 @@ init(autoreset=True)
 
 class TravelLogger:
     def __init__(self):
+        # --- Componenti di Tracing ---
+        self.trace_id = str(uuid.uuid4())[:8]  # Trace ID unico per la sessione
+        self.node_start_time = time.time()     # Timer per calcolare la latenza (Span)
+        
         self.LOG_DIR = "logs"
         if not os.path.exists(self.LOG_DIR):
             os.makedirs(self.LOG_DIR)
@@ -22,7 +27,7 @@ class TravelLogger:
             f"log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
         )
         
-        # Colori
+        # Colori Originali
         self.NODE_COLORS = {
             "router_node": Fore.MAGENTA,
             "trip_planner_node": Fore.CYAN,
@@ -48,13 +53,21 @@ class TravelLogger:
     def _init_log_file(self):
         header = f"""
 {'='*60}
-🤖 TRAVEL AGENT AI ARCHITECT - SESSIONE AVVIATA
-📅 Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-📂 Log File: {self.session_file}
+TRAVEL AGENT AI ARCHITECT - SESSIONE AVVIATA
+Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Log File: {self.session_file}
+Trace ID: {self.trace_id}
 {'='*60}
 """
         with open(self.session_file, "w", encoding="utf-8") as f:
             f.write(header + "\n")
+
+    def _calculate_latency(self):
+        """Calcola i ms passati dall'ultimo evento (Attributes - Slide 18)"""
+        now = time.time()
+        latency_ms = int((now - self.node_start_time) * 1000)
+        self.node_start_time = now
+        return latency_ms
 
     def _strip_ansi(self, text):
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
@@ -73,84 +86,70 @@ class TravelLogger:
                 return self.NODE_NAMES[func_name], self.NODE_COLORS[func_name]
         return "SYSTEM", Fore.WHITE
 
-    # --- Metodi Smart ---
-    def info(self, msg): self._log("►", msg)
-    def error(self, msg): self._log("⚠️", msg, Fore.RED)
-    def warning(self, msg): self._log("⚠️", msg, Fore.YELLOW)
-    def thought(self, msg): self._log("🧠", f"[Pensiero] {msg}")
-    def action(self, msg): self._log("🛠️", f"[Tool] {msg}")
+    # --- Metodi Smart (Emoji rimosse) ---
+    def info(self, msg): self._log("*", msg)
+    def error(self, msg): self._log("!", msg, Fore.RED)
+    def warning(self, msg): self._log("!", msg, Fore.YELLOW)
+    def thought(self, msg): self._log("?", f"[Pensiero] {msg}")
+    def action(self, msg): self._log("#", f"[Tool] {msg}")
 
     def _log(self, level_icon, msg, color_override=None):
+        latency = self._calculate_latency()
         timestamp = datetime.now().strftime("%H:%M:%S")
         node_name, node_color = self._get_caller_info()
         
         if color_override:
             node_color = color_override
 
-        # Output Terminale (TUTTO COLORATO)
-        # Il colore inizia prima dell'header e finisce DOPO il messaggio
-        full_text = f"{node_color}[{timestamp}] --- {node_name} ---\n   {level_icon} {msg}{Style.RESET_ALL}"
+        # Output Terminale con Trace ID e Latency (Slide 18)
+        prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
+        full_text = f"{prefix}{node_color}[{timestamp}] --- {node_name} ---\n   {level_icon} {msg}{Style.RESET_ALL}"
         print(f"{full_text}\n")
         
-        # Output File
-        self._write(f"[{timestamp}] --- {node_name} ---\n   {level_icon} {msg}")
+        self._write(f"[{timestamp}] --- {node_name} --- {latency}ms --- {level_icon} {msg}")
 
     # --- Metodo Legacy ---
     def log_event(self, node_name, event_type, message):
+        latency = self._calculate_latency()
         timestamp = datetime.now().strftime("%H:%M:%S")
         
-        # Tavolozza 
         colors = {
-            "ROUTER": Fore.GREEN,                   # Verde Classico
-            "PLANNER": Fore.CYAN,                   # Blu Terminale
-            "FINDER": Style.BRIGHT + Fore.GREEN,    # Verde Brillante
-            "CRITIC": Fore.YELLOW,                  # Ambra (Attenzione)
-            "PUBLISHER": Fore.GREEN, 
-            "ERROR": Fore.RED,                      # Allarme Rosso
-            "INIT": Style.DIM + Fore.GREEN          # Fosforo sbiadito
+            "ROUTER": Fore.GREEN, "PLANNER": Fore.CYAN, 
+            "FINDER": Style.BRIGHT + Fore.GREEN, "CRITIC": Fore.YELLOW, 
+            "PUBLISHER": Fore.GREEN, "ERROR": Fore.RED, "INIT": Style.DIM + Fore.GREEN
         }
         color = colors.get(node_name, Fore.GREEN)
         
         icons = {
-            "THOUGHT": "[?]",   # Riflessione / Calcolo
-            "ACTION": "==>",    # Esecuzione comando
-            "INFO": " * ",      # Stato
-            "ERROR": "[!]",     # Interruzione critica
-            "RESULT": "[+]",    # Successo
-            "START": ">>>"      # Boot del nodo
+            "THOUGHT": "[?]", "ACTION": "==>", "INFO": " * ", 
+            "ERROR": "[!]", "RESULT": "[+]", "START": ">>>"
         }
         icon = icons.get(event_type, " - ")
         
-        # 1. Prepariamo l'intestazione
-        header = f"{color}[{timestamp}] {node_name} {icon} [{event_type}] "
+        # Header con metadati di Tracing (Pillar 2)
+        prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
+        header = f"{prefix}{color}[{timestamp}] {node_name} {icon} [{event_type}] "
         print(header, end="") 
         
-        # 2. Effetto Typing Live 
         for char in message:
             sys.stdout.write(char)
             sys.stdout.flush()
-            # Il 'pensiero' dell'agente scritto lentamente
             delay = 0.03 if event_type == "THOUGHT" else 0.01
             time.sleep(delay + random.uniform(0, 0.01))
         
-        # 3. Chiusura riga
         print(f"{Style.RESET_ALL}")
-        
-        # 4. Scrittura su file (mantiene la traccia pulita per il debugging)
-        self._write(f"[{timestamp}] --- {node_name} --- {icon} [{event_type}] {message}")
+        self._write(f"[{timestamp}] --- {node_name} --- {latency}ms --- {icon} [{event_type}] {message}")
 
     def log_tool(self, tool_name, action_desc):
-        """Log specifico per l'attivazione dei Tool"""
+        latency = self._calculate_latency()
         timestamp = datetime.now().strftime("%H:%M:%S")
-        color = Fore.BLUE  # Colore standard per i Tool
+        color = Fore.BLUE
         
-        header = f"{color}[{timestamp}] TOOL [{tool_name}] ==> "
+        prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
+        header = f"{prefix}{color}[{timestamp}] TOOL [{tool_name}] ==> "
         print(header, end="")
         
-        # Typing live per la descrizione dell'azione
         typing_print(action_desc, speed=0.01)
-        
-        # Scrittura su file
-        self._write(f"[{timestamp}] TOOL [{tool_name}] ==> {action_desc}")
+        self._write(f"[{timestamp}] TOOL [{tool_name}] --- {latency}ms --- {action_desc}")
 
 logger = TravelLogger()
