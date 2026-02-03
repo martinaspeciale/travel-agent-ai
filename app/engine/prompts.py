@@ -31,6 +31,11 @@ Se non sei sicuro della logistica o dei luoghi per questa specifica destinazione
 Se il budget è palesemente insufficiente per la destinazione (es. 30€ per 3gg a Venezia), 
 imposta confidence_score a 0.3 e scrivi nel focus che l'itinerario è puramente simbolico o gratuito.
 
+Se la destinazione fornita dall'utente è generica (es. 'un posto al caldo', 'luogo esotico'), 
+DEVI impostare confidence_score < 0.5. 
+Non scegliere una destinazione a caso. 
+Il sistema deve fermarsi e chiedere: 'Quale luogo esotico preferisci? (es. Bali, Maldive, Caraibi)'
+
 Rispondi SOLO con un JSON valido (senza markdown) con questa struttura:
 {{
   "confidence_score": 0.85,

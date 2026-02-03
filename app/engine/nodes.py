@@ -213,3 +213,20 @@ def ask_human_node(state: TravelAgentState):
     else:
         motivo = input("Cosa non va? Lascia un feedback per l'AI: ")
         return {"is_approved": False, "critic_feedback": motivo, "retry_count": state.get("retry_count", 0) + 1}
+    
+
+def failure_handler_node(state: TravelAgentState):
+    logger.log_event("SYSTEM", "ERROR", "[!] FATAL: Impossibile riconciliare i vincoli dopo vari tentativi.")
+    
+    # Costruiamo un messaggio di spiegazione basato sull'ultimo feedback del Critic
+    failure_msg = (
+        "L'agente non è riuscito a generare un itinerario che soddisfi "
+        f"sia il budget che la logistica. Ultimo feedback: {state.get('critic_feedback')}"
+    )
+    
+    # Creiamo un itinerario 'vuoto' per non far crashare il Publisher
+    return {
+        "itinerary": [], 
+        "is_approved": False, 
+        "critic_feedback": failure_msg
+    }

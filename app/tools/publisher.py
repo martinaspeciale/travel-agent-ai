@@ -30,6 +30,13 @@ def generate_gmaps_search_link(name, address):
     return f"https://www.google.com/maps/search/?api=1&query={safe_query}"
 
 def print_terminal_report(state):
+    if not state.get('itinerary') and not state.get('is_approved'):
+        print("\n" + "!"*60)
+        print(" [!] EMERGENCY ABORT: VALIDATION FAILED")
+        print(f" CAUSA: {state.get('critic_feedback')}")
+        print("!"*60 + "\n")
+        return
+    
     print("\n" + "="*60)
     print(f" >>> ITINERARIO FINALE: {state.get('destination', 'Viaggio').upper()}")
     print("="*60)

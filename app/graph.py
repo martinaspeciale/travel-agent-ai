@@ -2,18 +2,22 @@ from langgraph.graph import StateGraph, END
 from app.core.state import TravelAgentState
 from app.engine.nodes import (
     init_node, travel_router_node, trip_planner_node, 
-    places_finder_node, logistics_critic_node, publisher_node, ask_human_node
+    places_finder_node, logistics_critic_node, publisher_node, ask_human_node, failure_handler_node
 )
 
-def check_critic_verdict(state: TravelAgentState):
-    if state.get("is_approved", False) or state.get("retry_count", 0) >= 3:
-        return "approved"
-    return "rejected"
-
 def route_after_planner(state: TravelAgentState):
-    if state["confidence_score"] < 0.7:
-        return "ask_human" # Nodo ipotetico per intervento manuale
+    if state["confidence_score"] < 0.7:        return "ask_human" # Nodo per intervento manuale
     return "continue"
+
+def route_after_critic(state: TravelAgentState):
+    if state.get("is_approved", False):
+        return "approved"
+    
+    # Se il Critic boccia e abbiamo esaurito i tentativi (e.g. 3)
+    if state.get("retry_count", 0) >= 3:
+        return "fail"
+        
+    return "retry"
 
 workflow = StateGraph(TravelAgentState)
 
@@ -24,6 +28,7 @@ workflow.add_node("finder", places_finder_node)
 workflow.add_node("critic", logistics_critic_node)
 workflow.add_node("publisher", publisher_node)
 workflow.add_node("ask_human", ask_human_node)
+workflow.add_node("failure_handler", failure_handler_node)
 
 workflow.set_entry_point("init")
 workflow.add_edge("init", "router")
@@ -34,7 +39,7 @@ workflow.add_conditional_edges(
     route_after_planner, 
     {
         "ask_human": "ask_human",    # Se confidence < 0.7  --> Chiedi all'utente
-        "continue": "finder"        # Se confidence >= 0.7 --> vai avanti 
+        "continue": "finder"         # Se confidence >= 0.7 --> vai avanti 
     }
 )
 
@@ -51,11 +56,16 @@ workflow.add_edge("finder", "critic")
 
 workflow.add_conditional_edges(
     "critic",
-    check_critic_verdict,
-    {"approved": "publisher", "rejected": "planner"}
+    route_after_critic,
+    {
+        "approved": "publisher", 
+        "retry": "planner",
+        "fail": "failure_handler"
+    }
 )
 
 workflow.add_edge("publisher", END)
+workflow.add_edge("failure_handler", END)
 app = workflow.compile()
 
 if __name__ == "__main__":
