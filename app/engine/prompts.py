@@ -75,13 +75,13 @@ DATI:
 - Prezzi Reali (Tavily): {budget_context}
 
 REGOLA D'ORO:
-Sottrai il costo stimato delle attrazioni dal budget. 
-Se il costo di UNA SOLA attrazione (es. Palazzo Ducale) supera il budget giornaliero ({budget}/giorni), devi BOCCIARE l'itinerario.
+1. Se lo stile è 'LOW COST', sii spietato su ogni centesimo.
+2. Se lo stile è 'LUSSO', accetta costi elevati purché non superino il Budget Totale {budget}. 
+3. Boccia solo se il costo stimato totale supera palesemente il budget complessivo, non il singolo giorno.
 
-ISTRUZIONI CRITIC:
-1. Sii preciso: se un'attrazione è una piazza pubblica (es. Jackson Square), non inventare costi di ingresso.
-2. Se bocci un itinerario, DEVI suggerire una categoria alternativa (es. 'Suggerisci attività gratuite' o 'Cerca cibo da strada').
-s
+ISTRUZIONI:
+Se bocci, non limitarti a dire 'costa troppo', ma specifica di quanto (es. 'Mancano 200€ per coprire questa cena').
+
 Rispondi SOLO JSON:
 {{
   "approved": false,
