@@ -2,23 +2,23 @@
 
 > **An autonomous AI agent for travel planning, built following the principles of "Agentic AI: From Architecture to Orchestration".**
 
-This project implements a **Multi-Step Reasoning** architecture using **LangGraph** to orchestrate a complex cognitive flow (Router → Planner → Finder → Critic). It integrates **Llama 3** (via Groq) and the **Google Maps API** to generate real, navigable itineraries.
+This project implements a **Stateful Multi-Agent Cognitive Architecture** powered by *LangGraph*, designed to orchestrate complex decision-making flows through a *persistent shared state*. Unlike linear systems, this architecture enables *Self-Correction Loops* between Planning and Critic nodes, ensuring real-world *grounding* via external APIs and full *trajectory observability* through a custom-built Tracing system.
 
 ---
 
 ## Theoretical Architecture vs. Implementation
 
-This project was developed as a practical case study based on concepts covered in the **SEAI - Agentic AI** course. Below is the mapping between the theoretical concepts (Slides) and the codebase:
+This project was developed as a practical case study based on concepts covered in the **SEAI - Agentic AI** course. Below is the mapping between the theoretical concepts and the codebase:
 
-| Theoretical Concept (Slide) | Description | Code Implementation |
+| Theoretical Concept | Description | Code Implementation |
 | :--- | :--- | :--- |
-| **Anatomy of an Agent** (Slide 4) | The agent is a system composed of Brain (LLM), Memory, Tools, and Planning. | [**`nodes.py`**](./app/engine/nodes.py) (Brain), [**`state.py`**](./app/core/state.py) (Memory), [**`maps.py`**](./app/tools/maps.py) (Tools). |
-| **Cognitive Architectures: Tree of Thoughts** (Slide 5) | Generating multiple options (A, B, C) and evaluating them before selection. | [**`nodes.py`**](./app/engine/nodes.py) (using [**`prompts.py`**](./app/engine/prompts.py)) generates 3 drafts and selects the best one. |
-| **Memory & State Management** (Slide 7, 16) | Maintaining context across steps (User input, drafts, feedback). | [**`state.py`**](./app/core/state.py) defines the `TravelAgentState` (TypedDict) which persists data in the graph. |
-| **Tool Use & Function Calling** (Slide 8) | Ability to act in the real world via deterministic APIs. | [**`maps.py`**](./app/tools/maps.py) integrates Google Maps API to fetch real places, addresses, and ratings. |
-| **The Artifact** (Slide 14) | The output is not just text, but a structured and usable object. | [**`publisher.py`**](./app/tools/publisher.py) generates professional **Word (.docx)** and **HTML** reports. |
-| **Resilience & Self-Correction** (Slide 17) | Error handling and feedback loops if the result is invalid. | [**`graph.py`**](./app/graph.py) (Critic loop) and [**`utils.py`**](./app/core/utils.py) (robust JSON parsing). |
-| **Observability: "The Kitchen"** (Slide 18-19) | Monitoring the "thought process" (Reasoning) vs. Action. | [**`logger.py`**](./app/core/logger.py) tracks structured events (`THOUGHT` vs. `ACTION`) with color coding for debugging. |
+| **Anatomy of an Agent** | The agent is a system composed of Brain (LLM), Memory, Tools, and Planning. | [**`nodes.py`**](./app/engine/nodes.py) (Brain), [**`state.py`**](./app/core/state.py) (Memory), [**`maps.py`**](./app/tools/maps.py) (Tools). |
+| **Cognitive Architectures: Tree of Thoughts** | Generating multiple options (A, B, C) and evaluating them before selection. | [**`nodes.py`**](./app/engine/nodes.py) (using [**`prompts.py`**](./app/engine/prompts.py)) generates 3 drafts and selects the best one. |
+| **Memory & State Management** | Maintaining context across steps (User input, drafts, feedback). | [**`state.py`**](./app/core/state.py) defines the `TravelAgentState` (TypedDict) which persists data in the graph. |
+| **Tool Use & Function Calling** | Ability to act in the real world via deterministic APIs. | [**`maps.py`**](./app/tools/maps.py) integrates Google Maps API to fetch real places, addresses, and ratings. |
+| **The Artifact** | The output is not just text, but a structured and usable object. | [**`publisher.py`**](./app/tools/publisher.py) generates professional **Word (.docx)** and **HTML** reports. |
+| **Resilience & Self-Correction** | Error handling and feedback loops if the result is invalid. | [**`graph.py`**](./app/graph.py) (Critic loop) and [**`utils.py`**](./app/core/utils.py) (robust JSON parsing). |
+| **Observability: "The Kitchen"** | Monitoring the "thought process" (Reasoning) vs. Action. | [**`logger.py`**](./app/core/logger.py) tracks structured events (`THOUGHT` vs. `ACTION`) with color coding for debugging. |
 | **Grounding & Tools** | Using external search engines to anchor the LLM to real-world facts (prices, updates). | [**`search.py`**](./app/tools/search.py) integrates **Tavily API** for real-time price verification. |
 | **Metacognition** | The agent evaluates its own confidence before acting to prevent hallucinations. | [**`nodes.py`**](./app/engine/nodes.py) calculates a `confidence_score` based on budget/destination constraints. |
 | **Human-in-the-Loop (HITL)** | Manual intervention when the agent is uncertain or the plan is rejected. | [**`graph.py`**](./app/graph.py) implements an interruption point (`ask_human`) when confidence is < 0.7. |
@@ -66,7 +66,8 @@ TAVILY_API_KEY=tvly-...
 API keys used to run the agent can be found here:
 * **Groq API:** [console.groq.com](https://console.groq.com/keys)
 * **Google Maps API:** [console.cloud.google.com](https://console.cloud.google.com/google/maps-apis/credentials)
-* **Mistral AI:** [console.mistral.ai](https://console.mistral.ai/api-keys/)
+* **Mistral API:** [console.mistral.ai](https://console.mistral.ai/api-keys/)
+* **Tavily Search API:** [app.tavily.com](https://app.tavily.com/home)
 
 ---
 
@@ -78,12 +79,12 @@ Run the agent from the terminal using the main entry point:
 python main.py
 ```
 
-Follow the on-screen instructions:
-1.  Enter **Destination** 
-2.  Enter **Days** 
-3.  Enter **Interests** 
-4.  Enter **Budget**
-5.  Enter **Travelers**
+Follow the on-screen instructions, entering:
+1.  **Destination** 
+2.  **Days** 
+3.  **Interests** 
+4.  **Budget**
+5.  **Travelers**
 
 The agent will start the reasoning process (displayed in logs) and eventually generate:
 1.  A detailed itinerary in the terminal.
@@ -115,6 +116,8 @@ travel-agent-ai/
 └── .env                # Environment Variables (API Keys)
 ```
 
+<!---
+
 ## Test Scenarios & Edge Cases
 
 These scenarios are designed to stress-test the architecture and demonstrate the core pillars of **Robustness** and **Metacognition**.
@@ -138,6 +141,7 @@ These scenarios are designed to stress-test the architecture and demonstrate the
 * **Input:** `Tokyo and New York, 1 day, Luxury, Solo`
 * **Purpose:** Verifies **Logical Consistency**.
 * **Expected Behavior:** Even with an unlimited budget, the **Critic** must reject the itinerary. It identifies the physical impossibility of visiting both cities in 24 hours, demonstrating that the agent understands spatial and temporal constraints beyond simple text generation.
+-->
 
 ---
 
