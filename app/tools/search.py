@@ -16,10 +16,24 @@ def search_prices_tool(query: str):
         search_query = f"ticket prices and free things to do {query}"
         results = tavily_client.search(query=search_query, max_results=2)
         
-        context = ""
-        for res in results['results']:
-            context += f"\n- {res['content']}"
-        return context
+        context_lines = []
+        for res in results.get('results', []):
+            title = res.get('title', 'Senza titolo')
+            url = res.get('url', 'URL non disponibile')
+            content = res.get('content', '').strip()
+
+            # Log in output: cosa ha trovato e dove
+            logger.log_event("TAVILY", "RESULT", f"{title} | {url}")
+            if content:
+                logger.log_event("TAVILY", "INFO", content[:240])
+
+            # Contesto per il critic (include fonte)
+            context_lines.append(f"- {title} ({url}): {content}")
+
+        if not context_lines:
+            return "Nessun risultato Tavily disponibile."
+
+        return "\n".join(context_lines)
     except Exception as e:
         logger.log_event("TOOL", "ERROR", f"Tavily error: {e}")
         return "Informazioni sui prezzi non disponibili."
