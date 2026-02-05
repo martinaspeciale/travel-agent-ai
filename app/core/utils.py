@@ -64,7 +64,7 @@ def extract_budget_number(budget_str: str) -> float:
     return number
 
 
-def typing_print(text, speed=0.01):
+def typing_print(text, speed=0.003):
     """Stampa il testo con un effetto 'typing' live."""
     for char in text:
         sys.stdout.write(char)

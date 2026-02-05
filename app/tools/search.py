@@ -19,16 +19,15 @@ def search_prices_tool(query: str):
         context_lines = []
         for res in results.get('results', []):
             title = res.get('title', 'Senza titolo')
-            url = res.get('url', 'URL non disponibile')
             content = res.get('content', '').strip()
 
             # Log in output: cosa ha trovato e dove
-            logger.log_event("TAVILY", "RESULT", f"{title} | {url}")
+            logger.log_event("TAVILY", "RESULT", f"{title}")
             if content:
                 logger.log_event("TAVILY", "INFO", content[:240])
 
-            # Contesto per il critic (include fonte)
-            context_lines.append(f"- {title} ({url}): {content}")
+            # Contesto per il critic (senza URL)
+            context_lines.append(f"- {title}: {content}")
 
         if not context_lines:
             return "Nessun risultato Tavily disponibile."
