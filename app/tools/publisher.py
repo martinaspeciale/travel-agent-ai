@@ -2,6 +2,7 @@ import os
 import urllib.parse
 from docx import Document
 from docx.shared import Pt, RGBColor
+from docx.opc.constants import RELATIONSHIP_TYPE as RELATIONSHIP_TYPE
 
 # --- CONFIGURAZIONE ---
 OUTPUT_DIR = "outputs"
@@ -28,6 +29,28 @@ def generate_gmaps_search_link(name, address):
     safe_query = urllib.parse.quote(query)
     # Usa l'API di ricerca universale ufficiale
     return f"https://www.google.com/maps/search/?api=1&query={safe_query}"
+
+def _format_terminal_link(label, url):
+    if not url:
+        return label
+    # OSC 8 hyperlink (supported by most modern terminals)
+    return f"\033]8;;{url}\033\\{label}\033]8;;\033\\"
+
+def _add_docx_hyperlink(paragraph, text, url):
+    """
+    Add a clickable hyperlink to a docx paragraph.
+    """
+    part = paragraph.part
+    r_id = part.relate_to(url, RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+    hyperlink = paragraph._p.add_hyperlink(r_id)
+    new_run = paragraph._p._new_r()
+    rPr = new_run._r.get_or_add_rPr()
+    color = RGBColor(0, 0, 255)
+    rPr.get_or_add_color().val = "%02X%02X%02X" % (color.rgb[0], color.rgb[1], color.rgb[2])
+    rPr.get_or_add_u().val = "single"
+    new_run.add_text(text)
+    hyperlink.append(new_run._r)
+    return hyperlink
 
 def print_terminal_report(state):
     if not state.get('itinerary') and not state.get('is_approved'):
@@ -56,7 +79,7 @@ def print_terminal_report(state):
             
             link = generate_gmaps_search_link(name, address)
             if link:
-                print(f"       Link: {link}")
+                print(f"       Link: {_format_terminal_link('Apri su Maps', link)}")
             print("       " + "." * 20)
 
 def generate_html_report(state):
@@ -126,7 +149,7 @@ def generate_docx_report(state):
     doc = Document()
     
     # Titolo Principale
-    title = doc.add_heading(f'✈️ Itinerario: {destination.upper()}', 0)
+    title = doc.add_heading(f'Itinerario: {destination.upper()}', 0)
     title.alignment = 1 # Center
 
     doc.add_paragraph(f"Ecco il tuo piano di viaggio generato dall'AI per {destination}.")
@@ -156,9 +179,7 @@ def generate_docx_report(state):
             if link:
                 
                 p_link = doc.add_paragraph(style='List Bullet')
-                r_link = p_link.add_run(f"Apri su Maps: {link}")
-                r_link.font.color.rgb = RGBColor(0, 0, 255)
-                r_link.font.underline = True
+                _add_docx_hyperlink(p_link, "Apri su Maps", link)
             
             doc.add_paragraph("_" * 40) # Separatore
 
