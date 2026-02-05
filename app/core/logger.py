@@ -74,6 +74,11 @@ Trace ID: {self.trace_id}
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         return ansi_escape.sub('', text)
 
+    def _pad_after_prefix(self, prefix, target_col=20):
+        visible_len = len(self._strip_ansi(prefix))
+        pad_len = max(1, target_col - visible_len)
+        return " " * pad_len
+
     def _write(self, content):
         clean_content = self._strip_ansi(content)
         with open(self.session_file, "a", encoding="utf-8") as f:
@@ -104,7 +109,7 @@ Trace ID: {self.trace_id}
 
         # Output leggibile con header allineato rispetto al trace
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
-        tab_pad = " " * 12
+        tab_pad = self._pad_after_prefix(prefix)
         header_text = f"[{timestamp}] --- {node_name} ---"
         print(f"{prefix}{tab_pad}{node_color}{header_text}{Style.RESET_ALL}")
         print(f"{tab_pad}{level_icon} {msg}{Style.RESET_ALL}\n")
@@ -130,7 +135,7 @@ Trace ID: {self.trace_id}
         icon = icons.get(event_type, " - ")
         
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
-        tab_pad = " " * 12
+        tab_pad = self._pad_after_prefix(prefix)
         header_text = f"[{timestamp}] {node_name} {icon} [{event_type}]"
         print(f"{prefix}{tab_pad}{color}{header_text}{Style.RESET_ALL}")
         
@@ -149,7 +154,7 @@ Trace ID: {self.trace_id}
         color = Fore.BLUE
         
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
-        tab_pad = " " * 12
+        tab_pad = self._pad_after_prefix(prefix)
         header_text = f"[{timestamp}] TOOL [{tool_name}] ==> "
         print(f"{prefix}{tab_pad}{color}{header_text}{Style.RESET_ALL}")
         
