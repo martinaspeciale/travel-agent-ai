@@ -110,9 +110,6 @@ def trip_planner_node(state: TravelAgentState):
     
     # Estrazione sicura dei dati
     itinerary_data = data.get("itinerary", [])
-    confidence = data.get("confidence_score", 0.0)
-    
-    logger.log_event("PLANNER", "INFO", f"Confidenza Agente: {confidence}")
 
     # Stampa sintetica dell'itinerario proposto
     if itinerary_data and isinstance(itinerary_data, list):
@@ -124,21 +121,7 @@ def trip_planner_node(state: TravelAgentState):
             place_names = ", ".join([p.get("name", "Luogo") for p in places]) if places else "Nessun luogo"
             print(f"- Giorno {day_number}: {focus} | {place_names}")
 
-    # --- IMPLEMENTAZIONE HITL ---
-    # Se la confidenza è < 0.7, forziamo il blocco dell'approvazione automatica
-    is_low_confidence = confidence < 0.7
-    
-    if is_low_confidence:
-        logger.log_event("PLANNER", "WARNING", f"Confidenza bassa ({confidence}). Richiesta revisione manuale.")
-        # Impostiamo un feedback che il Critic o l'interfaccia useranno per fermare il flusso
-        confidence_feedback = f"REVISIONE RICHIESTA: L'agente ha una confidenza di solo {confidence}."
-        existing_feedback = state.get("critic_feedback")
-        if existing_feedback:
-            status_feedback = f"{existing_feedback} | {confidence_feedback}"
-        else:
-            status_feedback = confidence_feedback
-    else:
-        status_feedback = state.get("critic_feedback")
+    status_feedback = state.get("critic_feedback")
 
     # Fallback se il JSON è malformato
     if not itinerary_data or not isinstance(itinerary_data, list):
@@ -147,8 +130,8 @@ def trip_planner_node(state: TravelAgentState):
 
     return {
         "itinerary": itinerary_data, 
-        "confidence_score": confidence,          # Salviamo lo score nello stato
-        "is_approved": not is_low_confidence,    # Se la confidenza è bassa, NON è approvato
+        "confidence_score": state.get("confidence_score", 0.0),
+        "is_approved": False,
         "critic_feedback": status_feedback,
         "retry_count": state.get("retry_count", 0) + 1,
         "banned_places": sorted(set(banned_places)) if banned_places else state.get("banned_places")
@@ -290,6 +273,49 @@ def places_finder_node(state: TravelAgentState):
         
     budget_context = "\n".join([line for line in budget_context_lines if line])
     return {"budget_context": budget_context, "itinerary": updated_itinerary}
+
+# --- 5. CONFIDENCE NODE (POST-FINDER) ---
+def confidence_evaluator_node(state: TravelAgentState):
+    logger.log_event("CONFIDENCE", "START", "Valutazione confidenza post-verifica")
+
+    itinerary = state.get("itinerary", [])
+    if not itinerary:
+        confidence = 0.0
+    else:
+        confidence = 0.8
+
+        unverified = 0
+        total_places = 0
+        missing_costs = 0
+
+        for day in itinerary:
+            for place in day.get("places", []):
+                total_places += 1
+                if place.get("description", "").startswith("Non verificato"):
+                    unverified += 1
+                if not place.get("cost_info"):
+                    missing_costs += 1
+
+        if total_places > 0:
+            unverified_ratio = unverified / total_places
+            missing_cost_ratio = missing_costs / total_places
+            confidence -= 0.4 * unverified_ratio
+            confidence -= 0.3 * missing_cost_ratio
+
+        budget_total = state.get("budget_total")
+        total_budget = extract_budget_number(str(budget_total)) if budget_total else extract_budget_number(state.get("budget", ""))
+        num_days = int(state['days']) if state['days'].isdigit() else 1
+        daily_budget = total_budget / num_days
+        if daily_budget < 60:
+            confidence -= 0.1
+
+    confidence = max(0.0, min(1.0, round(confidence, 2)))
+    logger.log_event("CONFIDENCE", "INFO", f"Confidenza Agente: {confidence}")
+
+    if confidence < 0.7:
+        logger.log_event("CONFIDENCE", "WARNING", f"Confidenza bassa ({confidence}). Richiesta revisione manuale.")
+
+    return {"confidence_score": confidence}
 
 # --- 5. CRITIC NODE ---
 def logistics_critic_node(state: TravelAgentState):
