@@ -169,7 +169,7 @@ def places_finder_node(state: TravelAgentState):
     # Contesto budget/costi basato sui luoghi reali dell'itinerario
     budget_context_lines = []
     tavily_calls = 0
-    max_tavily_calls = 4
+    max_tavily_calls = 2
 
     def _maybe_tavily(query: str):
         nonlocal tavily_calls
@@ -268,14 +268,7 @@ def places_finder_node(state: TravelAgentState):
                 )
             else:
                 logger.log_event("FINDER", "WARNING", f"Nessun match per: {place_name}")
-                cost_text = _maybe_tavily(f"{place_name} {state['destination']}")
                 cost_info = None
-                if cost_text:
-                    cost_info = {
-                        "source": "tavily",
-                        "summary": cost_text
-                    }
-                    budget_context_lines.append(f"{place_name}: {cost_text}")
                 validated_places.append({
                     "name": place_name,
                     "address": place.get("address", "N/A"),
