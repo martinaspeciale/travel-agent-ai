@@ -13,22 +13,22 @@ This project was developed as a practical case study based on concepts covered i
 | Theoretical Concept | Description | Code Implementation |
 | :--- | :--- | :--- |
 | **Anatomy of an Agent** | The agent is a system composed of Brain (LLM), Memory, Tools, and Planning. | [**`nodes.py`**](./app/engine/nodes.py) (Brain), [**`state.py`**](./app/core/state.py) (Memory), [**`maps.py`**](./app/tools/maps.py) (Tools). |
-| **Cognitive Architectures: Tree of Thoughts** | Generating multiple options (A, B, C) and evaluating them before selection. | [**`nodes.py`**](./app/engine/nodes.py) (using [**`prompts.py`**](./app/engine/prompts.py)) generates 3 drafts and selects the best one. |
+| **Cognitive Architectures: Planner** | Generates an itinerary proposal based on style, budget, and constraints. | [**`nodes.py`**](./app/engine/nodes.py) (using [**`prompts.py`**](./app/engine/prompts.py)) produces the initial itinerary proposal. |
 | **Memory & State Management** | Maintaining context across steps (User input, drafts, feedback). | [**`state.py`**](./app/core/state.py) defines the `TravelAgentState` (TypedDict) which persists data in the graph. |
 | **Tool Use & Function Calling** | Ability to act in the real world via deterministic APIs. | [**`maps.py`**](./app/tools/maps.py) integrates Google Maps API to fetch real places, addresses, and ratings. |
 | **The Artifact** | The output is not just text, but a structured and usable object. | [**`publisher.py`**](./app/tools/publisher.py) generates professional **Word (.docx)** and **HTML** reports. |
 | **Resilience & Self-Correction** | Error handling and feedback loops if the result is invalid. | [**`graph.py`**](./app/graph.py) (Critic loop) and [**`utils.py`**](./app/core/utils.py) (robust JSON parsing). |
 | **Observability: "The Kitchen"** | Monitoring the "thought process" (Reasoning) vs. Action. | [**`logger.py`**](./app/core/logger.py) tracks structured events (`THOUGHT` vs. `ACTION`) with color coding for debugging. |
 | **Grounding & Tools** | Using external search engines to anchor the LLM to real-world facts (prices, updates). | [**`search.py`**](./app/tools/search.py) integrates **Tavily API** for real-time price verification. |
-| **Metacognition** | The agent evaluates its own confidence before acting to prevent hallucinations. | [**`nodes.py`**](./app/engine/nodes.py) calculates a `confidence_score` based on budget/destination constraints. |
-| **Human-in-the-Loop (HITL)** | Manual intervention when the agent is uncertain or the plan is rejected. | [**`graph.py`**](./app/graph.py) implements an interruption point (`ask_human`) when confidence is < 0.7. |
+| **Metacognition** | The agent evaluates confidence after place verification to reduce hallucinations. | [**`nodes.py`**](./app/engine/nodes.py) calculates a `confidence_score` post-Finder. |
+| **Human-in-the-Loop (HITL)** | Manual intervention when the agent is uncertain or prices are missing. | [**`graph.py`**](./app/graph.py) implements an interruption point (`ask_human`) when confidence is < 0.7 or price confirmation is needed. |
 | **Robustness** | Managing edge cases like extreme budgets, multipliers, or ambiguous inputs. | [**`utils.py`**](./app/core/utils.py) implements regex-based budget parsing (e.g., "100k", "1 milione"). |
 
 ---
 
 ## Key Features
 
-* **Tree of Thoughts Planning:** Rejects the first output; generates alternatives based on travel style (Relax, Cultural, Adventure).
+* **Planner + Critic Loop:** Generates an itinerary and retries when constraints are not satisfied.
 * **Critic-in-the-Loop:** A "Critic" node evaluates logistics (distances, timing) and rejects impossible itineraries, forcing the Planner to retry.
 * **Real-World Data:** Uses Google Maps Places API to find real addresses, ratings, and reviews (preventing location hallucinations).
 * **Dual-Format Artifacts:** Automatically generates both a **Word Document (.docx)** for editing and an **HTML Report** with visual maps.
@@ -83,7 +83,7 @@ Follow the on-screen instructions, entering:
 1.  **Destination** 
 2.  **Days** 
 3.  **Interests** 
-4.  **Budget**
+4.  **Total Budget (EUR)**
 5.  **Travelers**
 
 The agent will start the reasoning process (displayed in logs) and eventually generate:
