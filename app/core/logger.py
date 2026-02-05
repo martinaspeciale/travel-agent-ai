@@ -102,13 +102,12 @@ Trace ID: {self.trace_id}
         if color_override:
             node_color = color_override
 
-        # Output leggibile con header centrato e trace a sinistra
-        term_width = shutil.get_terminal_size((100, 20)).columns
-        header_text = f"[{timestamp}] --- {node_name} ---"
-        centered = header_text.center(term_width)
+        # Output leggibile con header allineato rispetto al trace
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
-        print(f"{prefix}{node_color}{centered}{Style.RESET_ALL}")
-        print(f"   {level_icon} {msg}{Style.RESET_ALL}\n")
+        tab_pad = " " * 12
+        header_text = f"[{timestamp}] --- {node_name} ---"
+        print(f"{prefix}{tab_pad}{node_color}{header_text}{Style.RESET_ALL}")
+        print(f"{tab_pad}{level_icon} {msg}{Style.RESET_ALL}\n")
         
         self._write(f"[{timestamp}] --- {node_name} --- {latency}ms --- {level_icon} {msg}")
 
@@ -130,11 +129,10 @@ Trace ID: {self.trace_id}
         }
         icon = icons.get(event_type, " - ")
         
-        term_width = shutil.get_terminal_size((100, 20)).columns
-        header_text = f"[{timestamp}] {node_name} {icon} [{event_type}]"
-        centered = header_text.center(term_width)
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
-        print(f"{prefix}{color}{centered}{Style.RESET_ALL}")
+        tab_pad = " " * 12
+        header_text = f"[{timestamp}] {node_name} {icon} [{event_type}]"
+        print(f"{prefix}{tab_pad}{color}{header_text}{Style.RESET_ALL}")
         
         for char in message:
             sys.stdout.write(char)
@@ -150,11 +148,10 @@ Trace ID: {self.trace_id}
         timestamp = datetime.now().strftime("%H:%M:%S")
         color = Fore.BLUE
         
-        term_width = shutil.get_terminal_size((100, 20)).columns
-        header_text = f"[{timestamp}] TOOL [{tool_name}] ==> "
-        centered = header_text.center(term_width)
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
-        print(f"{prefix}{color}{centered}{Style.RESET_ALL}")
+        tab_pad = " " * 12
+        header_text = f"[{timestamp}] TOOL [{tool_name}] ==> "
+        print(f"{prefix}{tab_pad}{color}{header_text}{Style.RESET_ALL}")
         
         typing_print(action_desc, speed=0.01)
         self._write(f"[{timestamp}] TOOL [{tool_name}] --- {latency}ms --- {action_desc}")
