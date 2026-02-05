@@ -21,6 +21,7 @@ class TravelAgentState(TypedDict):
     days: str
     interests: str
     budget: str
+    budget_total: Optional[str]
     companion: str
     
     # Output

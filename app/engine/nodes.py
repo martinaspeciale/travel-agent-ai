@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from colorama import Fore, Style, init
 from langchain_core.messages import HumanMessage
 from app.core.state import TravelAgentState
@@ -22,17 +23,20 @@ def init_node(state: TravelAgentState):
     dest = input(f"{Fore.GREEN}📍 Dove vuoi andare? {Style.RESET_ALL}").strip()
     days = input(f"{Fore.GREEN}📅 Quanti giorni? {Style.RESET_ALL}").strip()
     interests = input(f"{Fore.GREEN}🎨 Interessi? {Style.RESET_ALL}").strip()
-    budget = input(f"{Fore.GREEN}💰 Budget? (Low/Medio/Lusso) {Style.RESET_ALL}").strip() or "Medio"
+    budget_total = input(f"{Fore.GREEN}💶 Budget totale indicativo (€)? {Style.RESET_ALL}").strip()
     companion = input(f"{Fore.GREEN}👥 Con chi viaggi? (Solo/Coppia/Famiglia) {Style.RESET_ALL}").strip() or "Solo"
     
-    logger.info(f"Input: {dest}, {days}gg, {budget}, {companion}")
+    logger.info(f"Input: {dest}, {days}gg, {budget_total or 'N/D'}€, {companion}")
+
+    budget_note = f"Budget totale: {budget_total}€." if budget_total else "Budget non specificato."
 
     return {
-        "user_input": f"{days} giorni a {dest}, interessi: {interests}. Budget: {budget}, Gruppo: {companion}",
+        "user_input": f"{days} giorni a {dest}, interessi: {interests}. {budget_note} Gruppo: {companion}",
         "destination": dest,
         "days": days,
         "interests": interests,
-        "budget": budget,
+        "budget": f"{budget_total}€" if budget_total else "",
+        "budget_total": budget_total or None,
         "companion": companion,
         "retry_count": 0,
         "is_approved": False,
@@ -63,11 +67,14 @@ def trip_planner_node(state: TravelAgentState):
         logger.log_event("PLANNER", "WARNING", f"Feedback Critic: {feedback}")
         feedback_instr = f"CORREGGI L'ITINERARIO PRECEDENTE BASANDOTI SU QUESTO ERRORE: {feedback}"
 
+    budget_total = state.get("budget_total")
+    budget_label = f"{budget_total}€ totale (indicativo)" if budget_total else state.get('budget', 'Non specificato')
+
     formatted_prompt = prompts.PLANNER_PROMPT.format(
         destination=state['destination'],
         days=state['days'],
         style=state['travel_style'],
-        budget=state.get('budget', 'Medio'),
+        budget=budget_label,
         companion=state.get('companion', 'Solo'),
         feedback_instruction=feedback_instr
     )
@@ -83,6 +90,16 @@ def trip_planner_node(state: TravelAgentState):
     confidence = data.get("confidence_score", 0.0)
     
     logger.log_event("PLANNER", "INFO", f"Confidenza Agente: {confidence}")
+
+    # Stampa sintetica dell'itinerario proposto
+    if itinerary_data and isinstance(itinerary_data, list):
+        print("\nItinerario proposto:")
+        for day in itinerary_data:
+            day_number = day.get("day_number", "?")
+            focus = day.get("focus", "N/A")
+            places = day.get("places", [])
+            place_names = ", ".join([p.get("name", "Luogo") for p in places]) if places else "Nessun luogo"
+            print(f"- Giorno {day_number}: {focus} | {place_names}")
 
     # --- IMPLEMENTAZIONE HITL ---
     # Se la confidenza è < 0.7, forziamo il blocco dell'approvazione automatica
@@ -117,23 +134,54 @@ def trip_planner_node(state: TravelAgentState):
 def places_finder_node(state: TravelAgentState):
     logger.log_event("FINDER", "START", "Verifica Luoghi con Tool Maps")
     
-    total_budget = extract_budget_number(state['budget'])
+    budget_total = state.get("budget_total")
+    if budget_total:
+        total_budget = extract_budget_number(str(budget_total))
+    else:
+        total_budget = extract_budget_number(state['budget'])
     num_days = int(state['days']) if state['days'].isdigit() else 1
     daily_budget = total_budget / num_days
 
     # Contesto budget/costi basato sui luoghi reali dell'itinerario
     budget_context_lines = []
+    tavily_calls = 0
+    max_tavily_calls = 4
+
+    def _maybe_tavily(query: str):
+        nonlocal tavily_calls
+        if tavily_calls >= max_tavily_calls:
+            return None
+        tavily_calls += 1
+        return search_prices_tool(query)
+
+    def _summarize_cost_info(cost_info: dict) -> str:
+        if not cost_info:
+            return "n/d"
+        summary = cost_info.get("summary", "").strip()
+        if not summary:
+            return "n/d"
+        lines = [line.strip(" -") for line in summary.splitlines() if line.strip()]
+        first = lines[0] if lines else summary
+        first = re.sub(r"\([^)]*https?://[^)]*\)", "", first)
+        first = re.sub(r"https?://\S+", "", first).strip()
+        if len(first) > 140:
+            first = first[:137] + "..."
+        return first if first else "n/d"
+
     if daily_budget < 70:
         logger.log_event("FINDER", "WARNING", f"Budget critico rilevato: {daily_budget}€/giorno. Uso Tavily.")
         # Usiamo Tavily per trovare opzioni gratuite nella destinazione
         logger.log_tool("TAVILY", f"Ricerca attività low-cost a {state['destination']}...")
         query = f"free things to do and cheap eats in {state['destination']}"
-        budget_context_lines.append(search_prices_tool(query))
+        low_cost_info = _maybe_tavily(query)
+        if low_cost_info:
+            budget_context_lines.append(low_cost_info)
 
     updated_itinerary = []
     
     for day in state.get('itinerary', []):
         validated_places = []
+        day_print_lines = []
         for place in day.get('places', []):
             place_name = place.get('name', 'Luogo sconosciuto')
             query = f"{place_name} {state['destination']}"
@@ -151,9 +199,14 @@ def places_finder_node(state: TravelAgentState):
             # Se il tool ha restituito la lista di dict correttamente
             if results and isinstance(results, list) and len(results) > 0:
                 real_place = results[0]
-                cost_info = search_prices_tool(f"{real_place.get('name')} {state['destination']}")
-                if cost_info:
-                    budget_context_lines.append(f"{real_place.get('name')}: {cost_info}")
+                cost_text = _maybe_tavily(f"{real_place.get('name')} {state['destination']}")
+                cost_info = None
+                if cost_text:
+                    cost_info = {
+                        "source": "tavily",
+                        "summary": cost_text
+                    }
+                    budget_context_lines.append(f"{real_place.get('name')}: {cost_text}")
                 validated_places.append({
                     "name": real_place.get("name"),
                     "address": real_place.get("address"),
@@ -162,11 +215,19 @@ def places_finder_node(state: TravelAgentState):
                     "cost_info": cost_info
                 })
                 logger.log_event("FINDER", "RESULT", f"Trovato: {real_place.get('name')}")
+                day_print_lines.append(
+                    f"{real_place.get('name')} | {real_place.get('address')} | rating: {real_place.get('rating', 'N/A')} | costi: {_summarize_cost_info(cost_info)}"
+                )
             else:
                 logger.log_event("FINDER", "WARNING", f"Nessun match per: {place_name}")
-                cost_info = search_prices_tool(f"{place_name} {state['destination']}")
-                if cost_info:
-                    budget_context_lines.append(f"{place_name}: {cost_info}")
+                cost_text = _maybe_tavily(f"{place_name} {state['destination']}")
+                cost_info = None
+                if cost_text:
+                    cost_info = {
+                        "source": "tavily",
+                        "summary": cost_text
+                    }
+                    budget_context_lines.append(f"{place_name}: {cost_text}")
                 validated_places.append({
                     "name": place_name,
                     "address": place.get("address", "N/A"),
@@ -174,9 +235,17 @@ def places_finder_node(state: TravelAgentState):
                     "description": "Non verificato (Verifica quota API)",
                     "cost_info": cost_info
                 })
+                day_print_lines.append(
+                    f"{place_name} | {place.get('address', 'N/A')} | rating: N/A | costi: {_summarize_cost_info(cost_info)}"
+                )
         
         day['places'] = validated_places
         updated_itinerary.append(day)
+
+        if day_print_lines:
+            print(f"\nLuoghi selezionati (giorno {day.get('day_number', '?')}):")
+            for line in day_print_lines:
+                print(f"- {line}")
         
     budget_context = "\n".join([line for line in budget_context_lines if line])
     return {"budget_context": budget_context, "itinerary": updated_itinerary}
@@ -185,10 +254,13 @@ def places_finder_node(state: TravelAgentState):
 def logistics_critic_node(state: TravelAgentState):
     logger.log_event("CRITIC", "START", "Validazione Logistica")
     
+    budget_total = state.get("budget_total")
+    budget_label = f"{budget_total}€ totale (indicativo)" if budget_total else state.get('budget', 'Non specificato')
+
     formatted_prompt = prompts.CRITIC_PROMPT.format(
         destination=state['destination'],
         itinerary=json.dumps(state['itinerary'], indent=2),
-        budget=state.get('budget', 'Non specificato'),                  
+        budget=budget_label,                  
         budget_context=state.get('budget_context', 'Nessun dato extra')
     )
     
