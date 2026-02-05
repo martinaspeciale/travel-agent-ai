@@ -5,6 +5,7 @@ import uuid
 import time
 import random
 import inspect
+import shutil
 from datetime import datetime
 from colorama import Fore, Style, init
 from app.core.utils import typing_print
@@ -101,10 +102,13 @@ Trace ID: {self.trace_id}
         if color_override:
             node_color = color_override
 
-        # Output Terminale con Trace ID e Latency (Slide 18)
+        # Output leggibile con header centrato e trace a sinistra
+        term_width = shutil.get_terminal_size((100, 20)).columns
+        header_text = f"[{timestamp}] --- {node_name} ---"
+        centered = header_text.center(term_width)
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
-        full_text = f"{prefix}{node_color}[{timestamp}] --- {node_name} ---\n   {level_icon} {msg}{Style.RESET_ALL}"
-        print(f"{full_text}\n")
+        print(f"{prefix}{node_color}{centered}{Style.RESET_ALL}")
+        print(f"   {level_icon} {msg}{Style.RESET_ALL}\n")
         
         self._write(f"[{timestamp}] --- {node_name} --- {latency}ms --- {level_icon} {msg}")
 
@@ -126,15 +130,16 @@ Trace ID: {self.trace_id}
         }
         icon = icons.get(event_type, " - ")
         
-        # Header con metadati di Tracing (Pillar 2)
+        term_width = shutil.get_terminal_size((100, 20)).columns
+        header_text = f"[{timestamp}] {node_name} {icon} [{event_type}]"
+        centered = header_text.center(term_width)
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
-        header = f"{prefix}{color}[{timestamp}] {node_name} {icon} [{event_type}] "
-        print(header)
+        print(f"{prefix}{color}{centered}{Style.RESET_ALL}")
         
         for char in message:
             sys.stdout.write(char)
             sys.stdout.flush()
-            delay = 0.03 if event_type == "THOUGHT" else 0.01
+            delay = 0.01 if event_type == "THOUGHT" else 0.004
             time.sleep(delay + random.uniform(0, 0.01))
         
         print(f"{Style.RESET_ALL}")
@@ -145,9 +150,11 @@ Trace ID: {self.trace_id}
         timestamp = datetime.now().strftime("%H:%M:%S")
         color = Fore.BLUE
         
+        term_width = shutil.get_terminal_size((100, 20)).columns
+        header_text = f"[{timestamp}] TOOL [{tool_name}] ==> "
+        centered = header_text.center(term_width)
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
-        header = f"{prefix}{color}[{timestamp}] TOOL [{tool_name}] ==> "
-        print(header)
+        print(f"{prefix}{color}{centered}{Style.RESET_ALL}")
         
         typing_print(action_desc, speed=0.01)
         self._write(f"[{timestamp}] TOOL [{tool_name}] --- {latency}ms --- {action_desc}")
