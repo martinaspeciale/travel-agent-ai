@@ -93,6 +93,35 @@ The agent will start the reasoning process (displayed in logs) and eventually ge
 
 ---
 
+## Graph Flow (Visual)
+
+```text
+INIT
+  |
+  v
+ROUTER
+  |
+  v
+PLANNER
+  |
+  v
+FINDER (maps + price context)
+  |
+  v
+CONFIDENCE (post-verification)
+  | \
+  |  \-- if low confidence OR missing prices --> ASK_HUMAN
+  |                                         | 
+  |                                         +-- approve --> CRITIC
+  |                                         +-- reject  --> PLANNER
+  v
+CRITIC
+  | \
+  |  \-- if approved --> PUBLISHER --> END
+  |
+  \-- if rejected --> PLANNER (retry up to 3) --> FAILURE_HANDLER --> END
+```
+
 ## Project Structure
 
 ```text
