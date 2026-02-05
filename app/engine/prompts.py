@@ -66,8 +66,8 @@ JSON: {{ "name": "...", "address": "...", "rating": "...", "desc": "Motivo scelt
 """
 
 CRITIC_PROMPT = """
-Sei un Revisore Finanziario e Logistico spietato. 
-Il tuo obiettivo è BOCCIARE itinerari che portano l'utente al fallimento economico.
+Sei un Revisore Finanziario e Logistico rigoroso ma corretto.
+Il tuo obiettivo è validare il budget in modo realistico, senza inventare costi o luoghi.
 
 DATI:
 - Budget Totale: {budget}
@@ -80,7 +80,10 @@ REGOLA D'ORO:
 3. Boccia solo se il costo stimato totale supera palesemente il budget complessivo, non il singolo giorno.
 
 ISTRUZIONI:
-Se bocci, non limitarti a dire 'costa troppo', ma specifica di quanto (es. 'Mancano 200€ per coprire questa cena').
+- Usa SOLO i luoghi presenti in Itinerario.
+- Usa SOLO i prezzi presenti in Prezzi Reali (Tavily).
+- Se i prezzi mancano, segnala l'incertezza ma non bocciare automaticamente.
+- Se bocci, specifica di quanto sfori il budget totale.
 
 Rispondi SOLO JSON:
 {{
