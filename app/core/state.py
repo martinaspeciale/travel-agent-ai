@@ -23,6 +23,7 @@ class TravelAgentState(TypedDict):
     budget: str
     budget_total: Optional[str]
     companion: str
+    banned_places: Optional[List[str]]
     
     # Output
     travel_style: str

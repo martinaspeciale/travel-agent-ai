@@ -18,13 +18,13 @@ init(autoreset=True)
 def init_node(state: TravelAgentState):
     logger.log_event("INIT", "START", "Nuova sessione")
     
-    print(Fore.CYAN + "\n🌍 TRAVEL AGENT AI 2.0 - ARCHITECT EDITION\n")
+    print(Fore.CYAN + "\n::: TRAVEL AGENT AI 2.0 - ARCHITECT EDITION :::\n")
     
-    dest = input(f"{Fore.GREEN}📍 Dove vuoi andare? {Style.RESET_ALL}").strip()
-    days = input(f"{Fore.GREEN}📅 Quanti giorni? {Style.RESET_ALL}").strip()
-    interests = input(f"{Fore.GREEN}🎨 Interessi? {Style.RESET_ALL}").strip()
-    budget_total = input(f"{Fore.GREEN}💶 Budget totale indicativo (€)? {Style.RESET_ALL}").strip()
-    companion = input(f"{Fore.GREEN}👥 Con chi viaggi? (Solo/Coppia/Famiglia) {Style.RESET_ALL}").strip() or "Solo"
+    dest = input(f"{Fore.GREEN}>> Dove vuoi andare? {Style.RESET_ALL}").strip()
+    days = input(f"{Fore.GREEN}>> Quanti giorni? {Style.RESET_ALL}").strip()
+    interests = input(f"{Fore.GREEN}>> Interessi? {Style.RESET_ALL}").strip()
+    budget_total = input(f"{Fore.GREEN}>> Budget totale indicativo (€)? {Style.RESET_ALL}").strip()
+    companion = input(f"{Fore.GREEN}>> Con chi viaggi? (Solo/Coppia/Famiglia) {Style.RESET_ALL}").strip() or "Solo"
     
     logger.info(f"Input: {dest}, {days}gg, {budget_total or 'N/D'}€, {companion}")
 
@@ -67,6 +67,29 @@ def trip_planner_node(state: TravelAgentState):
         logger.log_event("PLANNER", "WARNING", f"Feedback Critic: {feedback}")
         feedback_instr = f"CORREGGI L'ITINERARIO PRECEDENTE BASANDOTI SU QUESTO ERRORE: {feedback}"
 
+    # Blacklist luoghi già proposti se il piano è stato bocciato
+    banned_places = []
+    if state.get("critic_feedback") and state.get("itinerary"):
+        for day in state.get("itinerary", []):
+            for place in day.get("places", []):
+                name = place.get("name")
+                if name:
+                    banned_places.append(name)
+        if banned_places:
+            banned_list = ", ".join(sorted(set(banned_places)))
+            feedback_instr = f"{feedback_instr}\nNON USARE QUESTI LUOGHI: {banned_list}."
+
+    budget_total = state.get("budget_total")
+    total_budget = extract_budget_number(str(budget_total)) if budget_total else extract_budget_number(state.get("budget", ""))
+    num_days = int(state['days']) if state['days'].isdigit() else 1
+    daily_budget = total_budget / num_days
+    if daily_budget < 60:
+        low_cost_instr = (
+            "BUDGET BASSO: proponi solo street food, mercati, free tour e luoghi gratuiti. "
+            "Evita ristoranti costosi o attività a pagamento."
+        )
+        feedback_instr = f"{feedback_instr}\n{low_cost_instr}" if feedback_instr else low_cost_instr
+
     budget_total = state.get("budget_total")
     budget_label = f"{budget_total}€ totale (indicativo)" if budget_total else state.get('budget', 'Non specificato')
 
@@ -106,7 +129,7 @@ def trip_planner_node(state: TravelAgentState):
     is_low_confidence = confidence < 0.7
     
     if is_low_confidence:
-        logger.log_event("PLANNER", "WARNING", f"⚠️ Confidenza Bassa ({confidence}). Richiesta revisione manuale.")
+        logger.log_event("PLANNER", "WARNING", f"Confidenza bassa ({confidence}). Richiesta revisione manuale.")
         # Impostiamo un feedback che il Critic o l'interfaccia useranno per fermare il flusso
         confidence_feedback = f"REVISIONE RICHIESTA: L'agente ha una confidenza di solo {confidence}."
         existing_feedback = state.get("critic_feedback")
@@ -127,7 +150,8 @@ def trip_planner_node(state: TravelAgentState):
         "confidence_score": confidence,          # Salviamo lo score nello stato
         "is_approved": not is_low_confidence,    # Se la confidenza è bassa, NON è approvato
         "critic_feedback": status_feedback,
-        "retry_count": state.get("retry_count", 0) + 1
+        "retry_count": state.get("retry_count", 0) + 1,
+        "banned_places": sorted(set(banned_places)) if banned_places else state.get("banned_places")
     }
 
 # --- 4. FINDER NODE ---
@@ -168,6 +192,24 @@ def places_finder_node(state: TravelAgentState):
             first = first[:137] + "..."
         return first if first else "n/d"
 
+    def _address_matches_destination(address: str, destination: str) -> bool:
+        if not address or not destination:
+            return False
+        address_l = address.lower()
+        dest_l = destination.lower()
+        if dest_l in address_l:
+            return True
+        aliases = {
+            "milano": "milan",
+            "roma": "rome",
+            "firenze": "florence",
+            "venezia": "venice",
+            "napoli": "naples",
+            "torino": "turin"
+        }
+        alt = aliases.get(dest_l)
+        return alt in address_l if alt else False
+
     if daily_budget < 70:
         logger.log_event("FINDER", "WARNING", f"Budget critico rilevato: {daily_budget}€/giorno. Uso Tavily.")
         # Usiamo Tavily per trovare opzioni gratuite nella destinazione
@@ -197,6 +239,12 @@ def places_finder_node(state: TravelAgentState):
                 results = []
 
             # Se il tool ha restituito la lista di dict correttamente
+            if results and isinstance(results, list) and len(results) > 0:
+                real_place = results[0]
+                if not _address_matches_destination(real_place.get("address", ""), state["destination"]):
+                    logger.log_event("FINDER", "WARNING", f"Luogo fuori destinazione: {real_place.get('name')}")
+                    results = []
+                
             if results and isinstance(results, list) and len(results) > 0:
                 real_place = results[0]
                 cost_text = _maybe_tavily(f"{real_place.get('name')} {state['destination']}")
@@ -285,13 +333,13 @@ def publisher_node(state: TravelAgentState):
     docx_file = generate_docx_report(state)
 
     print("\n" + "="*60)
-    print(f"\n📄 Report salvati in 'outputs/': \n   - {os.path.basename(html_file)}\n   - {os.path.basename(docx_file)}")
+    print(f"\nReport salvati in 'outputs/': \n   - {os.path.basename(html_file)}\n   - {os.path.basename(docx_file)}")
     print("="*60)
     return state
 
 def ask_human_node(state: TravelAgentState):
     logger.log_event("SYSTEM", "WARNING", f"CONFIDENZA BASSA ({state.get('confidence_score')})")
-    print(Fore.YELLOW + "\n⚠️  L'AI non è sicura dell'itinerario generato.")
+    print(Fore.YELLOW + "\nATTENZIONE: l'AI non e' sicura dell'itinerario generato.")
     scelta = input(Fore.WHITE + "Vuoi procedere comunque? (s/n): ").lower().strip()
     
     if scelta == 's':
