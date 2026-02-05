@@ -91,7 +91,12 @@ def trip_planner_node(state: TravelAgentState):
     if is_low_confidence:
         logger.log_event("PLANNER", "WARNING", f"⚠️ Confidenza Bassa ({confidence}). Richiesta revisione manuale.")
         # Impostiamo un feedback che il Critic o l'interfaccia useranno per fermare il flusso
-        status_feedback = f"REVISIONE RICHIESTA: L'agente ha una confidenza di solo {confidence}."
+        confidence_feedback = f"REVISIONE RICHIESTA: L'agente ha una confidenza di solo {confidence}."
+        existing_feedback = state.get("critic_feedback")
+        if existing_feedback:
+            status_feedback = f"{existing_feedback} | {confidence_feedback}"
+        else:
+            status_feedback = confidence_feedback
     else:
         status_feedback = state.get("critic_feedback")
 
@@ -116,14 +121,14 @@ def places_finder_node(state: TravelAgentState):
     num_days = int(state['days']) if state['days'].isdigit() else 1
     daily_budget = total_budget / num_days
 
-    # SOGLIA DI ROBUSTEZZA: Sotto i 70€ al giorno è considerato 'Budget Critico'
-    budget_context = ""
+    # Contesto budget/costi basato sui luoghi reali dell'itinerario
+    budget_context_lines = []
     if daily_budget < 70:
         logger.log_event("FINDER", "WARNING", f"Budget critico rilevato: {daily_budget}€/giorno. Uso Tavily.")
         # Usiamo Tavily per trovare opzioni gratuite nella destinazione
         logger.log_tool("TAVILY", f"Ricerca attività low-cost a {state['destination']}...")
         query = f"free things to do and cheap eats in {state['destination']}"
-        budget_context = search_prices_tool(query)
+        budget_context_lines.append(search_prices_tool(query))
 
     updated_itinerary = []
     
@@ -146,25 +151,34 @@ def places_finder_node(state: TravelAgentState):
             # Se il tool ha restituito la lista di dict correttamente
             if results and isinstance(results, list) and len(results) > 0:
                 real_place = results[0]
+                cost_info = search_prices_tool(f"{real_place.get('name')} {state['destination']}")
+                if cost_info:
+                    budget_context_lines.append(f"{real_place.get('name')}: {cost_info}")
                 validated_places.append({
                     "name": real_place.get("name"),
                     "address": real_place.get("address"),
                     "rating": real_place.get("rating", "N/A"),
-                    "description": "Verificato con Google Maps"
+                    "description": "Verificato con Google Maps",
+                    "cost_info": cost_info
                 })
                 logger.log_event("FINDER", "RESULT", f"Trovato: {real_place.get('name')}")
             else:
                 logger.log_event("FINDER", "WARNING", f"Nessun match per: {place_name}")
+                cost_info = search_prices_tool(f"{place_name} {state['destination']}")
+                if cost_info:
+                    budget_context_lines.append(f"{place_name}: {cost_info}")
                 validated_places.append({
                     "name": place_name,
                     "address": place.get("address", "N/A"),
                     "rating": "N/A",
-                    "description": "Non verificato (Verifica quota API)"
+                    "description": "Non verificato (Verifica quota API)",
+                    "cost_info": cost_info
                 })
         
         day['places'] = validated_places
         updated_itinerary.append(day)
         
+    budget_context = "\n".join([line for line in budget_context_lines if line])
     return {"budget_context": budget_context, "itinerary": updated_itinerary}
 
 # --- 5. CRITIC NODE ---
