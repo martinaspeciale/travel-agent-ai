@@ -280,6 +280,7 @@ def confidence_evaluator_node(state: TravelAgentState):
 
     itinerary = state.get("itinerary", [])
     reasons = []
+    needs_price_ack = False
     if not itinerary:
         confidence = 0.0
         reasons.append("Itinerario vuoto")
@@ -300,13 +301,12 @@ def confidence_evaluator_node(state: TravelAgentState):
 
         if total_places > 0:
             unverified_ratio = unverified / total_places
-            missing_cost_ratio = missing_costs / total_places
             confidence -= 0.4 * unverified_ratio
-            confidence -= 0.3 * missing_cost_ratio
             if unverified > 0:
                 reasons.append(f"{unverified}/{total_places} luoghi non verificati")
             if missing_costs > 0:
                 reasons.append(f"{missing_costs}/{total_places} luoghi senza info costi")
+                needs_price_ack = True
 
         budget_total = state.get("budget_total")
         total_budget = extract_budget_number(str(budget_total)) if budget_total else extract_budget_number(state.get("budget", ""))
@@ -326,8 +326,20 @@ def confidence_evaluator_node(state: TravelAgentState):
             "WARNING",
             f"Confidenza bassa ({confidence}). Motivi: {reason_text}. Richiesta revisione manuale."
         )
+    elif needs_price_ack:
+        reason_text = "; ".join(reasons) if reasons else "Mancano info costi"
+        logger.log_event(
+            "CONFIDENCE",
+            "WARNING",
+            f"Prezzi mancanti: {reason_text}. Richiesta conferma per proseguire."
+        )
 
-    return {"confidence_score": confidence}
+    feedback = state.get("critic_feedback")
+    if needs_price_ack:
+        price_ack = "PRICE_ACK: Mancano prezzi per alcune voci; potrebbero emergere spese addizionali."
+        feedback = f"{feedback} | {price_ack}" if feedback else price_ack
+
+    return {"confidence_score": confidence, "critic_feedback": feedback}
 
 # --- 5. CRITIC NODE ---
 def logistics_critic_node(state: TravelAgentState):
@@ -369,15 +381,28 @@ def publisher_node(state: TravelAgentState):
     return state
 
 def ask_human_node(state: TravelAgentState):
-    logger.log_event("SYSTEM", "WARNING", f"CONFIDENZA BASSA ({state.get('confidence_score')})")
-    print(Fore.YELLOW + "\nATTENZIONE: l'AI non e' sicura dell'itinerario generato.")
+    critic_feedback = state.get("critic_feedback") or ""
+    needs_price_ack = critic_feedback.startswith("PRICE_ACK:") or "PRICE_ACK:" in critic_feedback
+    if needs_price_ack:
+        logger.log_event("SYSTEM", "WARNING", "MANCANZA PREZZI")
+        print(Fore.YELLOW + "\nATTENZIONE: mancano prezzi per alcune voci.")
+        print("Potrebbero emergere spese addizionali non stimate.")
+    else:
+        logger.log_event("SYSTEM", "WARNING", f"CONFIDENZA BASSA ({state.get('confidence_score')})")
+        print(Fore.YELLOW + "\nATTENZIONE: l'AI non e' sicura dell'itinerario generato.")
     scelta = input(Fore.WHITE + "Vuoi procedere comunque? (s/n): ").lower().strip()
     
     if scelta == 's':
+        if needs_price_ack:
+            return {"is_approved": True, "critic_feedback": None}
         return {"is_approved": True, "critic_feedback": None}
     else:
         motivo = input("Cosa non va? Lascia un feedback per l'AI: ")
-        return {"is_approved": False, "critic_feedback": motivo, "retry_count": state.get("retry_count", 0) + 1}
+        return {
+            "is_approved": False,
+            "critic_feedback": motivo,
+            "retry_count": state.get("retry_count", 0) + 1
+        }
     
 
 def failure_handler_node(state: TravelAgentState):

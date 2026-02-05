@@ -9,7 +9,9 @@ def route_after_planner(state: TravelAgentState):
     return "continue"
 
 def route_after_confidence(state: TravelAgentState):
-    if state["confidence_score"] < 0.7:
+    critic_feedback = state.get("critic_feedback") or ""
+    needs_price_ack = critic_feedback.startswith("PRICE_ACK:") or "PRICE_ACK:" in critic_feedback
+    if needs_price_ack or state["confidence_score"] < 0.7:
         return "ask_human"
     return "continue"
 
@@ -62,7 +64,7 @@ workflow.add_conditional_edges(
     "ask_human",
     lambda state: "approved" if state["is_approved"] else "rejected",
     {
-        "approved": "finder",   # L'utente ha detto OK --> vai al Finder
+        "approved": "critic",   # L'utente ha detto OK --> vai al Critic
         "rejected": "planner"   # L'utent ha dato feedback --> torna al Planner
     }
 )
