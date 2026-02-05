@@ -279,8 +279,10 @@ def confidence_evaluator_node(state: TravelAgentState):
     logger.log_event("CONFIDENCE", "START", "Valutazione confidenza post-verifica")
 
     itinerary = state.get("itinerary", [])
+    reasons = []
     if not itinerary:
         confidence = 0.0
+        reasons.append("Itinerario vuoto")
     else:
         confidence = 0.8
 
@@ -301,6 +303,10 @@ def confidence_evaluator_node(state: TravelAgentState):
             missing_cost_ratio = missing_costs / total_places
             confidence -= 0.4 * unverified_ratio
             confidence -= 0.3 * missing_cost_ratio
+            if unverified > 0:
+                reasons.append(f"{unverified}/{total_places} luoghi non verificati")
+            if missing_costs > 0:
+                reasons.append(f"{missing_costs}/{total_places} luoghi senza info costi")
 
         budget_total = state.get("budget_total")
         total_budget = extract_budget_number(str(budget_total)) if budget_total else extract_budget_number(state.get("budget", ""))
@@ -308,12 +314,18 @@ def confidence_evaluator_node(state: TravelAgentState):
         daily_budget = total_budget / num_days
         if daily_budget < 60:
             confidence -= 0.1
+            reasons.append(f"Budget giornaliero basso ({round(daily_budget, 2)}€)")
 
     confidence = max(0.0, min(1.0, round(confidence, 2)))
     logger.log_event("CONFIDENCE", "INFO", f"Confidenza Agente: {confidence}")
 
     if confidence < 0.7:
-        logger.log_event("CONFIDENCE", "WARNING", f"Confidenza bassa ({confidence}). Richiesta revisione manuale.")
+        reason_text = "; ".join(reasons) if reasons else "Motivo non specificato"
+        logger.log_event(
+            "CONFIDENCE",
+            "WARNING",
+            f"Confidenza bassa ({confidence}). Motivi: {reason_text}. Richiesta revisione manuale."
+        )
 
     return {"confidence_score": confidence}
 
