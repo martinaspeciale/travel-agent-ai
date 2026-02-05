@@ -69,5 +69,5 @@ workflow.add_edge("failure_handler", END)
 app = workflow.compile()
 
 if __name__ == "__main__":
-    print("🤖 TRAVEL AGENT AVVIATO...")
+    print("TRAVEL AGENT AVVIATO...")
     app.invoke({"retry_count": 0, "is_approved": False})

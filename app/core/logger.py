@@ -129,7 +129,7 @@ Trace ID: {self.trace_id}
         # Header con metadati di Tracing (Pillar 2)
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
         header = f"{prefix}{color}[{timestamp}] {node_name} {icon} [{event_type}] "
-        print(header, end="") 
+        print(header)
         
         for char in message:
             sys.stdout.write(char)
@@ -147,7 +147,7 @@ Trace ID: {self.trace_id}
         
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
         header = f"{prefix}{color}[{timestamp}] TOOL [{tool_name}] ==> "
-        print(header, end="")
+        print(header)
         
         typing_print(action_desc, speed=0.01)
         self._write(f"[{timestamp}] TOOL [{tool_name}] --- {latency}ms --- {action_desc}")

@@ -91,7 +91,7 @@ def generate_html_report(state):
     """
     
     for day in state.get('itinerary', []):
-        html += f"<div class='day-card'><h2>📅 Giorno {day['day_number']}: {day['focus']}</h2>"
+        html += f"<div class='day-card'><h2>Giorno {day['day_number']}: {day['focus']}</h2>"
         for p in day.get('places', []):
             name = p.get('name', 'Senza nome')
             address = p.get('address', '')
@@ -104,7 +104,7 @@ def generate_html_report(state):
                 <div class='address'>{address}</div>
             """
             if link:
-                html += f"<a href='{link}' class='btn' target='_blank'>📍 Vedi su Maps</a>"
+                html += f"<a href='{link}' class='btn' target='_blank'>Vedi su Maps</a>"
             html += "</div>"
         html += "</div>"
         
@@ -133,7 +133,7 @@ def generate_docx_report(state):
 
     for day in state.get('itinerary', []):
         # Intestazione Giorno
-        doc.add_heading(f"📅 Giorno {day['day_number']}: {day['focus']}", level=1)
+        doc.add_heading(f"Giorno {day['day_number']}: {day['focus']}", level=1)
         
         for p in day.get('places', []):
             name = p.get('name', 'Senza nome')
@@ -142,14 +142,14 @@ def generate_docx_report(state):
             
             # Nome Luogo 
             p_para = doc.add_paragraph()
-            runner = p_para.add_run(f"📍 {name}")
+            runner = p_para.add_run(f"{name}")
             runner.bold = True
             runner.font.size = Pt(12)
             runner.font.color.rgb = RGBColor(0, 51, 102) # Blu scuro
             
             # Dettagli
             doc.add_paragraph(f"   ⭐ Rating: {rating}")
-            doc.add_paragraph(f"   🏠 Indirizzo: {address}")
+            doc.add_paragraph(f"   Indirizzo: {address}")
             
             # Link Maps
             link = generate_gmaps_search_link(name, address)
