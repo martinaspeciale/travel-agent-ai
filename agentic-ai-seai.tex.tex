@@ -368,7 +368,7 @@
     \textbf{1. Shared Blackboard (Memory)}
     \begin{itemize}
         \item A single global state object readable/writable by all.
-        \item \textit{Risk:} Race conditions, context pollution.
+        \item \textit{Risk:} State overwrites, context pollution.
     \end{itemize}
     
     \textbf{2. Message Passing (Actor Model)}
@@ -377,11 +377,12 @@
         \item \textit{Format:} \texttt{\{from: "Researcher", to: "Writer", content: "..."\}}
     \end{itemize}
     
-    \textbf{3. Supervisor/Moderator}
+    \textbf{3. Supervisor / Moderator}
     \begin{itemize}
         \item A central LLM loop deciding who speaks next (e.g., AutoGen's GroupChat).
     \end{itemize}
 \end{frame}
+
 
 % SLIDE 16
 \begin{frame}{14. State Management in Orchestration}
