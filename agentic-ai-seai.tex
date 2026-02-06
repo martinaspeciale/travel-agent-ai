@@ -624,7 +624,7 @@
     
     \textbf{Defenses (Guardrails):}
     \begin{itemize}
-        \item \textbf{Input Rail:} Scan user prompts for PII or injection before execution.
+        \item \textbf{Input Rail:} Scan user prompts for PII or injection \textbf{before planning and tool selection}.
         \item \textbf{Output Rail:} Scan tool outputs and final text for leakage.
         \item \textbf{Sandboxing:} Execute tools in isolated containers with \textbf{restricted network access}  
         (default-deny + explicit whitelisting).
