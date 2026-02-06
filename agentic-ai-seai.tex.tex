@@ -523,9 +523,9 @@
 \begin{frame}{21. Hierarchy of Eval: Black Box vs. Glass Box}
     \textbf{Level 1: Black Box (End-to-End)}
     \begin{itemize}
-        \item Input: User Prompt. Output: Final Agent Response.
-        \item \textit{Metric:} "Is this answer helpful?"
-        \item \textit{Limit:} Doesn't explain *why* it failed.
+        \item Input: User prompt. Output: Final agent response.
+        \item \textit{Metric:} ``Is this answer helpful?''
+        \item \textit{Limit:} Doesn't explain \textit{why} it failed.
     \end{itemize}
     
     \textbf{Level 2: Glass Box (Trajectory Evaluation)}
@@ -533,11 +533,12 @@
         \item Inspects intermediate steps.
         \item \textbf{Plan Eval:} Was the reasoning logical?
         \item \textbf{Tool Eval:} Was the tool called with valid arguments?
-        \item \textbf{Code Eval:} Did the generated code compile?
+        \item \textbf{Code Eval:} Is the generated code \textbf{syntactically valid}?
     \end{itemize}
     
-    \textit{Strategy:} Start with Black Box. If score < Threshold, trigger Glass Box deep dive.
+    \textit{Strategy:} Start with Black Box. If score $<$ threshold, trigger a Glass Box deep dive.
 \end{frame}
+
 
 % SLIDE 24
 \begin{frame}{22. Automated Metrics (The Low Bar)}
