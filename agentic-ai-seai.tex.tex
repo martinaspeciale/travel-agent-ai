@@ -217,20 +217,21 @@
 
 % SLIDE 9
 \begin{frame}{7. RAG within Agents (Knowledge Augmentation)}
-    Retrieval-Augmented Generation is a "Read-Only" tool.
+    Retrieval-Augmented Generation acts as the agent's \textbf{memory read-path}.
     
     \textbf{Evaluation Surface Expansion:}
-    When an agent fails, was it the Reasoning or the Retrieval?
+    When an agent fails, was it the \textit{Reasoning} or the \textit{Memory Read-Path}?
     \begin{itemize}
-        \item \textbf{Chunking Strategy:} Fixed size vs. Semantic chunking.
-        \item \textbf{Retrieval Metric:} Recall@K (Did we find the right doc?).
-        \item \textbf{Generation Metric:} Faithfulness (Did we hallucinate based on the doc?).
+        \item \textbf{Chunking Strategy:} Fixed-size vs. semantic chunking.
+        \item \textbf{Retrieval Metric:} Recall@K (Did we retrieve the right document?).
+        \item \textbf{Generation Metric:} Faithfulness (Did we hallucinate beyond retrieved content?).
     \end{itemize}
     
     \textbf{Advanced RAG for Agents:}
     \begin{itemize}
-        \item \textit{Self-Querying:} Agent converts "Sold houses in Seattle" into SQL/Metadata filters {\texttt{city='Seattle', status='sold'}}.
-        \item \textit{Hybrid Search:} Keywords (BM25) + Vectors (Cosine Similarity).
+        \item \textit{Self-Querying:} Agent converts "Sold houses in Seattle" into SQL/metadata filters  
+        {\texttt{city='Seattle', status='sold'}}.
+        \item \textit{Hybrid Search:} Keywords (BM25) + vectors (cosine similarity).
     \end{itemize}
 \end{frame}
 
