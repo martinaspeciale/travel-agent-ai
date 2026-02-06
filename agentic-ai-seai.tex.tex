@@ -170,7 +170,11 @@
     \end{itemize}
 
     \begin{block}{Practical Trick}
-        Force the agent to output a "Confidence Score" (0-1) alongside its plan. If confidence < 0.7, trigger a Human-in-the-Loop (HITL) review before execution.
+        Force the agent to output a \textbf{Confidence Score} (0--1) alongside its plan.
+        \begin{itemize}
+            \item If confidence $< 0.7$, trigger a Human-in-the-Loop (HITL) review before execution.
+            \item \textbf{Warning:} LLM confidence scores are often \textit{uncalibrated} and may appear high even when the plan is incorrect.
+        \end{itemize}
     \end{block}
 \end{frame}
 
