@@ -215,25 +215,48 @@
     \end{alertblock}
 \end{frame}
 
-% SLIDE 9
+% SLIDE 9a
 \begin{frame}{7. RAG within Agents (Knowledge Augmentation)}
     Retrieval-Augmented Generation acts as the agent's \textbf{memory read-path}.
     
-    \textbf{Evaluation Surface Expansion:}
-    When an agent fails, was it the \textit{Reasoning} or the \textit{Memory Read-Path}?
+    \textbf{Read-Path Components:}
     \begin{itemize}
-        \item \textbf{Chunking Strategy:} Fixed-size vs. semantic chunking.
-        \item \textbf{Retrieval Metric:} Recall@K (Did we retrieve the right document?).
-        \item \textbf{Generation Metric:} Faithfulness (Did we hallucinate beyond retrieved content?).
+        \item Chunking
+        \item Indexing
+        \item Query formulation
+        \item Ranking
+        \item Context assembly
     \end{itemize}
+    
+    \textbf{Architectural Insight:}
+    RAG is not a tool invocation, but a structured memory access pipeline that conditions agent reasoning.
     
     \textbf{Advanced RAG for Agents:}
     \begin{itemize}
-        \item \textit{Self-Querying:} Agent converts "Sold houses in Seattle" into SQL/metadata filters  
+        \item \textit{Self-Querying:} Natural language $\rightarrow$ structured memory addressing  
         {\texttt{city='Seattle', status='sold'}}.
         \item \textit{Hybrid Search:} Keywords (BM25) + vectors (cosine similarity).
     \end{itemize}
 \end{frame}
+
+% SLIDE 9b
+\begin{frame}{8. Evaluating the Memory Read-Path}
+    \textbf{Evaluation Surface Expansion:}
+    
+    When an agent fails, was it the \textit{Reasoning} or the \textit{Memory Read-Path}?
+    
+    \vspace{0.2cm}
+    \textbf{Interpretation Shift:}
+    \begin{itemize}
+        \item \textbf{Chunking:} preprocessing $\rightarrow$ \textbf{memory layout}
+        \item \textbf{Recall@K:} retrieval quality $\rightarrow$ \textbf{memory access quality}
+        \item \textbf{Faithfulness:} hallucination $\rightarrow$ \textbf{read/write boundary violation}
+    \end{itemize}
+    
+    \textbf{Key Takeaway:}
+    RAG failures are often \textit{memory system failures}, not reasoning errors.
+\end{frame}
+
 
 % SLIDE 10
 \begin{frame}{8. Architectural Anti-Patterns}
