@@ -22,7 +22,7 @@
 
 % --- Title ---
 \title[Agentic AI: Arch to Ops]{Agentic AI: From Architecture to Orchestration and Quality}
-\subtitle{\subtitle{Engineering, Orchestrating, and Evaluating Autonomous AI Systems}}
+\subtitle{Engineering, Orchestrating, and Evaluating Autonomous AI Systems}
 \author{Marco Cococcioni}
 \institute{DII}
 \date{\today} % first draft: 1 Dec 2025
@@ -260,7 +260,7 @@
 
 
 % SLIDE 11
-\begin{frame}{8. Architectural Anti-Patterns}
+\begin{frame}{9. Architectural Anti-Patterns}
     \begin{columns}
         \column{0.5\textwidth}
         \textcolor{googlered}{\textbf{1. The God Agent}}
@@ -289,7 +289,7 @@
 % --- PART II: ORCHESTRATION ---
 
 % SLIDE 12
-\begin{frame}{9. Orchestration: Single vs. Multi-Agent Systems (MAS)}
+\begin{frame}{10. Orchestration: Single vs. Multi-Agent Systems (MAS)}
     \begin{table}[]
         \begin{tabular}{@{}lll@{}}
             \toprule
@@ -309,7 +309,7 @@
 
 
 % SLIDE 13
-\begin{frame}{10. Pattern A: The Router (Gateway)}
+\begin{frame}{11. Pattern A: The Router (Gateway)}
     The simplest Orchestration pattern.
     
     \begin{itemize}
@@ -328,7 +328,7 @@
 \end{frame}
 
 % SLIDE 14
-\begin{frame}{11. Pattern B: Hierarchical Teams (Boss-Worker)}
+\begin{frame}{12. Pattern B: Hierarchical Teams (Boss-Worker)}
     \textbf{Structure:}
     \begin{itemize}
         \item \textbf{Root (Manager):} Decomposes task. Cannot use tools. Only talks to Workers.
@@ -347,7 +347,7 @@
 \end{frame}
 
 % SLIDE 15
-\begin{frame}{12. Pattern C: Sequential Handoffs (The Chain)}
+\begin{frame}{13. Pattern C: Sequential Handoffs (The Chain)}
     A state machine approach. State A must finish before State B starts.
     
     \begin{center}
@@ -363,7 +363,7 @@
 \end{frame}
 
 % SLIDE 16
-\begin{frame}{13. Inter-Agent Communication Protocols}
+\begin{frame}{14. Inter-Agent Communication Protocols}
     How do agents talk?
     
     \textbf{1. Shared Blackboard (Memory)}
@@ -386,7 +386,7 @@
 
 
 % SLIDE 17
-\begin{frame}{14. State Management in Orchestration}
+\begin{frame}{15. State Management in Orchestration}
     In Agentic Systems, "State" is more than just variables.
     
     \textbf{The State Object:}
@@ -405,7 +405,7 @@
 \end{frame}
 
 % SLIDE 18
-\begin{frame}{15. Resilience and Error Recovery}
+\begin{frame}{16. Resilience and Error Recovery}
     Agents \textbf{will} fail. The architecture must be resilient.
     
     \begin{enumerate}
@@ -431,7 +431,7 @@
 % --- PART III: OBSERVABILITY ---
 
 % SLIDE 19
-\begin{frame}{16. Observability: Seeing Inside the Agent's Mind}
+\begin{frame}{17. Observability: Seeing Inside the Agent's Mind}
     \textit{Reference: Agent Quality Whitepaper, Chapter 3}
     
     \textbf{The "Kitchen Analogy"}
@@ -445,14 +445,14 @@
 \end{frame}
 
 % SLIDE 20
-\begin{frame}{17. Pillar 1: Logging (The Diary)}
+\begin{frame}{18. Pillar 1: Logging (The Diary)}
     Logs are atomic, timestamped events.
     
     \textbf{Best Practices:}
     \begin{itemize}
         \item \textbf{Structured JSON:} No plain text. \texttt{\{"timestamp": "...", "event": "tool\_call", "agent": "finance", "data": \{...\}\}}
         \item \textbf{Inputs \& Outputs:} Log the prompt \textit{before} the call and the response \textit{after}.
-        \item \textbf{Chain of Thought:} Log the "scratchpad" reasoning separately from the final answer.
+        \item \textbf{Chain of Thought:} Log intermediate reasoning summaries or decision metadata, not raw thoughts.
     \end{itemize}
 
     \begin{alertblock}{Dynamic Sampling Trade-off}
@@ -462,7 +462,7 @@
 \end{frame}
 
 % SLIDE 21
-\begin{frame}{18. Pillar 2: Tracing (The Narrative)}
+\begin{frame}{19. Pillar 2: Tracing (The Narrative)}
     Tracing connects individual logs into a causal chain (Trajectory).
     \textit{Standard: OpenTelemetry (OTEL)}
     
@@ -479,7 +479,7 @@
 \end{frame}
 
 % SLIDE 22
-\begin{frame}{19. Pillar 3: Metrics (The Scorecard)}
+\begin{frame}{20. Pillar 3: Metrics (The Scorecard)}
     Aggregated data over time. Two categories:
     
     \begin{columns}
@@ -504,7 +504,7 @@
 % --- PART IV: EVALUATION ---
 
 % SLIDE 23
-\begin{frame}{20. Evaluation: The Outside-In Framework}
+\begin{frame}{21. Evaluation: The Outside-In Framework}
     \textit{Reference: Agent Quality Whitepaper, Chapter 2}
     
     Traditional QA (Unit Tests) verifies logic. AI Evaluation validates \textbf{Intent}.
@@ -521,7 +521,7 @@
 \end{frame}
 
 % SLIDE 24
-\begin{frame}{21. Hierarchy of Eval: Black Box vs. Glass Box}
+\begin{frame}{22. Hierarchy of Eval: Black Box vs. Glass Box}
     \textbf{Level 1: Black Box (End-to-End)}
     \begin{itemize}
         \item Input: User prompt. Output: Final agent response.
@@ -542,7 +542,7 @@
 
 
 % SLIDE 25
-\begin{frame}{22. Automated Metrics (The Low Bar)}
+\begin{frame}{23. Automated Metrics (The Low Bar)}
     Fast, cheap, deterministic. Use as a "First Gate" in CI/CD.
     
     \begin{itemize}
@@ -556,7 +556,7 @@
 \end{frame}
 
 % SLIDE 26
-\begin{frame}{23. LLM-as-a-Judge (The Scalable Critic)}
+\begin{frame}{24. LLM-as-a-Judge (The Scalable Critic)}
     Using a strong LLM (e.g., GPT-4o, Claude 3.5 Sonnet) to evaluate a weaker agent.
     
     \textbf{Single-Point Scoring:}
@@ -577,26 +577,25 @@
 \end{frame}
 
 % SLIDE 27
-\begin{frame}{24. Agent-as-a-Judge (Process Evaluator)}
+\begin{frame}{25. Agent-as-a-Judge (Process Evaluator)}
     Evaluating the \textbf{Trajectory}, not just the output.
     
     \textbf{How it works:}
     \begin{itemize}
         \item Feed the Execution Trace (JSON) to a Critic Agent.
         \item Ask specific process questions:
-    \end{itemize}
-    
-    \begin{itemize}
-        \item \textit{"Did the agent try to search Google before searching the internal database?"} (Inefficiency).
-        \item \textit{"Did the agent loop more than 3 times on the same error?"} (Stupidity).
-        \item \textit{"Did the agent expose the API key in the final answer?"} (Safety).
+        \begin{itemize}
+            \item \textit{"Did the agent try to search Google before searching the internal database?"} (Inefficiency).
+            \item \textit{"Did the agent loop more than 3 times on the same error?"} (Stupidity).
+            \item \textit{"Did the agent expose the API key in the final answer?"} (Safety).
+        \end{itemize}
     \end{itemize}
     
     This detects "Lucky Guesses"—correct answers derived from bad logic.
 \end{frame}
 
 % SLIDE 28
-\begin{frame}{25. Human-in-the-Loop (HITL) Evaluation}
+\begin{frame}{26. Human-in-the-Loop (HITL) Evaluation}
     Humans are the arbiter of "Ground Truth".
     
     \textbf{When to use HITL:}
@@ -614,7 +613,7 @@
 \end{frame}
 
 % SLIDE 29
-\begin{frame}{26. Safety \& Red Teaming}
+\begin{frame}{27. Safety \& Red Teaming}
     Agents act in the real world. Safety is non-negotiable.
     
     \textbf{Attack Vectors:}
@@ -634,7 +633,7 @@
 
 
 % SLIDE 30
-\begin{frame}{27. The Agent Quality Flywheel}
+\begin{frame}{28. The Agent Quality Flywheel}
     \textit{Reference: Agent Quality Whitepaper, Chapter 4}
     
     Continuous Improvement Loop:
@@ -657,7 +656,7 @@
 \end{frame}
 
 % SLIDE 31
-\begin{frame}{28. Creating a "Golden Dataset"}
+\begin{frame}{29. Creating a "Golden Dataset"}
     Evaluation is impossible without a benchmark.
     
     \textbf{Recipe for a Golden Set:}
@@ -674,7 +673,7 @@
 \end{frame}
 
 % SLIDE 32
-\begin{frame}{29. Deployment Strategies (Ops)}
+\begin{frame}{30. Deployment Strategies (Ops)}
     \textbf{Shadow Mode:}
     Run the new agent alongside the old one. User sees Old, you log New. Compare outputs offline.
     
@@ -686,7 +685,7 @@
 \end{frame}
 
 % SLIDE 33 
-\begin{frame}{30. Future Trends}
+\begin{frame}{31. Future Trends}
     \begin{itemize}
         \item \textbf{Standardized Interfaces:} The "Agent Protocol" (standardizing how agents talk to tools).
         \item \textbf{Small Language Models (SLMs):} Running agents on-device for privacy/latency.
@@ -696,7 +695,7 @@
 \end{frame}
 
 % SLIDE 34 
-\begin{frame}{31. Conclusion \& Key Takeaways}
+\begin{frame}{32. Conclusion \& Key Takeaways}
     \begin{enumerate}
         \item \textbf{Architecture:} Design for decomposition. Don't build God Agents. Use State Machines for reliability.
         \item \textbf{Orchestration:} Complexity kills. Start simple (Router), evolve to Multi-Agent only when necessary.
@@ -707,7 +706,7 @@
 \end{frame}
 
 % SLIDE 35
-\begin{frame}{32. Acknowledgements}
+\begin{frame}{33. Acknowledgements}
 \centering
       We would like to thank student Martina Speciale\\ for her contribution to improving this tutorial.
 \end{frame}
