@@ -293,16 +293,19 @@
         \begin{tabular}{@{}lll@{}}
             \toprule
             \textbf{Feature} & \textbf{Single Agent} & \textbf{Multi-Agent System} \\ \midrule
-            Complexity & Low & High \\
+            Complexity & Low & High (coordination-dependent) \\
             Context Window & Bottleneck & Distributed across agents \\
-            Specialization & Generalist & Narrow Experts \\
-            Failure Mode & Hallucination/Stuck & Communication Deadlock \\
-            Use Case & Chatbot, Search & Software Dev, Complex Supply Chain \\ \bottomrule
+            Specialization & Generalist & Narrow experts \\
+            Failure Mode & Hallucination / stuck & Coordination failures \\
+            Use Case & Chatbot, search & Software dev, complex workflows \\ \bottomrule
         \end{tabular}
     \end{table}
     
-    \textbf{The Law of MAS:} Complexity grows quadratically with the number of agents due to communication overhead. Only use MAS when a single prompt cannot hold all necessary instructions/tools.
+    \textbf{The Law of MAS (Refined):}  
+    Communication complexity grows \textit{quadratically} only in \textbf{unstructured swarms} with all-to-all interactions.  
+    Structured orchestration (roles, hierarchies, routing) reduces coordination overhead.
 \end{frame}
+
 
 % SLIDE 12
 \begin{frame}{10. Pattern A: The Router (Gateway)}
