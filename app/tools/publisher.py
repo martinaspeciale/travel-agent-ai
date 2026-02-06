@@ -3,6 +3,8 @@ import urllib.parse
 from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.opc.constants import RELATIONSHIP_TYPE as RELATIONSHIP_TYPE
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
 # --- CONFIGURAZIONE ---
 OUTPUT_DIR = "outputs"
@@ -33,8 +35,8 @@ def generate_gmaps_search_link(name, address):
 def _format_terminal_link(label, url):
     if not url:
         return label
-    # OSC 8 hyperlink (supported by most modern terminals)
-    return f"\033]8;;{url}\033\\{label}\033]8;;\033\\"
+    # Plain URL for maximum compatibility across terminals
+    return f"{url}"
 
 def _add_docx_hyperlink(paragraph, text, url):
     """
@@ -42,14 +44,28 @@ def _add_docx_hyperlink(paragraph, text, url):
     """
     part = paragraph.part
     r_id = part.relate_to(url, RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
-    hyperlink = paragraph._p.add_hyperlink(r_id)
-    new_run = paragraph._p._new_r()
-    rPr = new_run._r.get_or_add_rPr()
-    color = RGBColor(0, 0, 255)
-    rPr.get_or_add_color().val = "%02X%02X%02X" % (color.rgb[0], color.rgb[1], color.rgb[2])
-    rPr.get_or_add_u().val = "single"
-    new_run.add_text(text)
-    hyperlink.append(new_run._r)
+
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), r_id)
+
+    run = OxmlElement("w:r")
+    rpr = OxmlElement("w:rPr")
+
+    color = OxmlElement("w:color")
+    color.set(qn("w:val"), "0000FF")
+    rpr.append(color)
+
+    underline = OxmlElement("w:u")
+    underline.set(qn("w:val"), "single")
+    rpr.append(underline)
+
+    run.append(rpr)
+    text_elem = OxmlElement("w:t")
+    text_elem.text = text
+    run.append(text_elem)
+
+    hyperlink.append(run)
+    paragraph._p.append(hyperlink)
     return hyperlink
 
 def print_terminal_report(state):
@@ -79,7 +95,8 @@ def print_terminal_report(state):
             
             link = generate_gmaps_search_link(name, address)
             if link:
-                print(f"       Link: {_format_terminal_link('Apri su Maps', link)}")
+                print("       Link:")
+                print(f"       {_format_terminal_link('Apri su Maps', link)}")
             print("       " + "." * 20)
 
 def generate_html_report(state):
