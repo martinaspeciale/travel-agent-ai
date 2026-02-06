@@ -6,5 +6,4 @@ logs/
 *.html
 *.docx
 .DS_Store
-*.tex
 *.pdf
