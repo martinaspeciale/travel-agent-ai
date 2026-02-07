@@ -49,12 +49,12 @@
 
 \begin{document}
 
-% SLIDE 1: Title
+% SLIDE 1 : Title
 \begin{frame}
     \titlepage
 \end{frame}
 
-% SLIDE 2: Agenda
+% SLIDE 2 : Agenda
 \begin{frame}{Agenda: The Lifecycle of an Agent}
     \begin{columns}[t]
         \column{0.5\textwidth}
@@ -649,9 +649,28 @@
     \end{itemize}
 \end{frame}
 
+% SLIDE 30 — Hallucinations in Agentic Systems
+\begin{frame}{Hallucinations in Agentic Systems (and Why They Hurt More)}
+In agentic workflows, hallucinations can trigger \textbf{real actions}, not just wrong text.
+
+\textbf{Typical failure modes:}
+\begin{itemize}
+    \item \textbf{Tool hallucination:} inventing a tool/endpoint or wrong arguments.
+    \item \textbf{RAG misuse:} citing retrieved context incorrectly (faithfulness violation).
+    \item \textbf{Overconfidence:} fluent answers with no uncertainty signaling.
+\end{itemize}
+
+\vspace{0.15cm}
+\begin{block}{Practical mitigation}
+Add \textbf{uncertainty gating}: if uncertainty is high, require retrieval, verification, or human approval.
+Semantic-entropy methods estimate uncertainty at the level of \textit{meaning} (not surface forms). \cite{semantic_entropy_2024}
+\end{block}
+\end{frame}
+
+
 % --- Frameworks in Practice ---
 
-% SLIDE 30 — Common Agent Frameworks in Practice
+% SLIDE 31 — Common Agent Frameworks in Practice
 \begin{frame}{Common Agent Frameworks in Practice}
     Many agentic systems today are built using high-level development frameworks.
 
@@ -673,7 +692,32 @@
     \textit{These frameworks significantly lower the barrier to building agentic applications.}
 \end{frame}
 
-% SLIDE 31 — Practice: LangChain Tool Calling
+% SLIDE 32 — Persona vs Task-Oriented Agents
+\begin{frame}{Persona-based vs Task-oriented Agents}
+Two common paradigms for agentic applications:
+
+\textbf{Persona-based (Role-playing) agents}
+\begin{itemize}
+    \item Goal: \textbf{consistent character / style} over time.
+    \item Useful for: tutoring, simulations, entertainment, coaching.
+    \item Key challenge: \textbf{persona consistency} across long dialogues. \cite{pcl_persona_2025}
+\end{itemize}
+
+\vspace{0.15cm}
+\textbf{Task-oriented agents}
+\begin{itemize}
+    \item Goal: \textbf{complete objectives} (slots, constraints, success metrics).
+    \item Useful for: customer support, travel booking, workflows.
+    \item Often benefits from \textbf{multi-agent delegation} across domains. \cite{dard_2024}
+\end{itemize}
+
+\vspace{0.15cm}
+\begin{alertblock}{Rule of thumb}
+Persona optimizes \textbf{experience}; task-orientation optimizes \textbf{success rate and reliability}.
+\end{alertblock}
+\end{frame}
+
+% SLIDE 33 — Practice: LangChain Tool Calling
 \begin{frame}[fragile]{Practice: LangChain Tool Calling (Minimal)}
 \small
 \begin{lstlisting}
@@ -695,7 +739,7 @@ print(response)
 \textit{Key idea:} Tool integration becomes a reusable pattern, not ad-hoc glue code.
 \end{frame}
 
-% SLIDE 32 — Practice: LangGraph State Machine
+% SLIDE 34 — Practice: LangGraph State Machine
 \begin{frame}[fragile]{Practice: LangGraph State Machine (Minimal)}
 \small
 \begin{lstlisting}
@@ -727,7 +771,7 @@ print(app.invoke({"n": 0}))
 \textit{Key idea:} Control-flow is explicit (graphs), not hidden inside prompts.
 \end{frame}
 
-% SLIDE 33 — Practice: LangChain vs LangGraph
+% SLIDE 35 — Practice: LangChain vs LangGraph
 \begin{frame}{Practice: LangChain vs LangGraph (Rule of Thumb)}
 \begin{itemize}
     \item \textbf{LangChain:} best for tool integration patterns (LLM + tools + memory).
@@ -751,7 +795,7 @@ Reusable agent components & LangChain \\ \bottomrule
 
 % --- Protocols: MCP & A2A ---
 
-% SLIDE 34 — Protocols: MCP vs A2A (Overview)
+% SLIDE 36 — Protocols: MCP vs A2A (Overview)
 \begin{frame}{Protocols: MCP vs A2A (Interoperability Layers)}
 Agentic systems are moving from \textit{framework glue-code} to \textit{standard protocols}.
 
@@ -773,7 +817,7 @@ reducing bespoke integrations and improving scalability. \cite{li2025a2a_mcp}
 \end{block}
 \end{frame}
 
-% SLIDE 35 — MCP: Client–Host–Server architecture
+% SLIDE 37 — MCP: Client–Host–Server architecture
 \begin{frame}{MCP: Tool Access as a Protocol (Client--Server)}
 \textbf{MCP (Model Context Protocol)} standardizes how an agent connects to external tools/data.
 
@@ -799,7 +843,7 @@ MCP turns integrations into \textbf{discoverable, structured interfaces} rather 
 \end{block}
 \end{frame}
 
-% SLIDE 36 — A2A: Agent-to-Agent protocol
+% SLIDE 38 — A2A: Agent-to-Agent protocol
 \begin{frame}{A2A: Agent-to-Agent Communication as a Protocol}
 \textbf{A2A (Agent-to-Agent)} defines how autonomous agents interact with each other \textbf{without sharing runtime state}.
 
@@ -825,7 +869,7 @@ A2A treats agents as \textbf{distributed systems components}, enabling scale, is
 \end{block}
 \end{frame}
 
-% SLIDE 37 — MCP vs A2A vs Frameworks
+% SLIDE 39 — MCP vs A2A vs Frameworks
 \begin{frame}{MCP vs A2A vs Frameworks: Who Does What?}
 \small
 
@@ -855,7 +899,7 @@ Protocols solve \textbf{system scalability and governance}. \cite{li2025a2a_mcp}
 \end{block}
 \end{frame}
 
-% SLIDE 38 — When to use (or not use) MCP/A2A
+% SLIDE 40 — When to use (or not use) MCP/A2A
 \begin{frame}{When (and When Not) to Use MCP / A2A}
 \textbf{Use MCP or A2A when:}
 \begin{itemize}
@@ -880,7 +924,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
 \end{alertblock}
 \end{frame}
 
-% SLIDE 
+% SLIDE 41
 \begin{frame}{The Agent Quality Flywheel}
     \textit{Reference: Agent Quality Whitepaper, Chapter 4}
     
@@ -903,7 +947,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
     \textbf{Key Concept:} Every production failure, once annotated, becomes a regression test. The system gets smarter with every error.
 \end{frame}
 
-% SLIDE 
+% SLIDE 42
 \begin{frame}{Creating a "Golden Dataset"}
     Evaluation is impossible without a benchmark.
     
@@ -920,7 +964,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
     \end{enumerate}
 \end{frame}
 
-% SLIDE 
+% SLIDE 43
 \begin{frame}{Deployment Strategies (Ops)}
     \textbf{Shadow Mode:}
     Run the new agent alongside the old one. User sees Old, you log New. Compare outputs offline.
@@ -932,7 +976,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
     For high-stakes tools (e.g., \texttt{transfer\_money}), the agent pauses and asks a human for approval via a UI before executing the tool.
 \end{frame}
 
-% SLIDE 
+% SLIDE 44
 \begin{frame}{Future Trends}
     \begin{itemize}
         \item \textbf{Standardized Interfaces:} The "Agent Protocol" (standardizing how agents talk to tools).
@@ -942,7 +986,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
     \end{itemize}
 \end{frame}
 
-% SLIDE 
+% SLIDE 45
 \begin{frame}{Conclusion \& Key Takeaways}
     \begin{enumerate}
         \item \textbf{Architecture:} Design for decomposition. Don't build God Agents. Use State Machines for reliability.
@@ -953,7 +997,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
 
 \end{frame}
 
-% SLIDE : REFERENCES 
+% SLIDE 46 : REFERENCES
 \begin{frame}[allowframebreaks]{References}
 \footnotesize
 
@@ -969,6 +1013,21 @@ LangChain.
 LangGraph.
 \newblock \emph{LangGraph Documentation}.
 \newblock \url{https://langchain-ai.github.io/langgraph/}
+
+\bibitem{pcl_persona_2025}
+Y. Zhang et al.
+\newblock \emph{Enhancing Persona Consistency for LLMs’ Role-Playing using Persona-Aware Contrastive Learning}.
+\newblock arXiv:2503.17662, 2025. \url{https://arxiv.org/abs/2503.17662}
+
+\bibitem{dard_2024}
+A. Gupta et al.
+\newblock \emph{DARD: A Multi-Agent Approach for Task-Oriented Dialog Systems}.
+\newblock arXiv:2411.00427, 2024. \url{https://arxiv.org/abs/2411.00427}
+
+\bibitem{semantic_entropy_2024}
+S. Farquhar et al.
+\newblock \emph{Detecting hallucinations in large language models using semantic entropy}.
+\newblock Nature, 2024. \url{https://pubmed.ncbi.nlm.nih.gov/38898292/}
 
 \bibitem{mcp_spec}
 Model Context Protocol.
@@ -989,7 +1048,7 @@ Q. Li and Y. Xie.
 \end{frame}
 
 
-% SLIDE 
+% SLIDE 47
 \begin{frame}{Acknowledgements}
 \centering
       We would like to thank student Martina Speciale\\ for her contribution to improving this tutorial.
