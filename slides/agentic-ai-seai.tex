@@ -52,12 +52,12 @@
 
 \begin{document}
 
-% SLIDE 1 : Title
+% SLIDE 1
 \begin{frame}
     \titlepage
 \end{frame}
 
-% SLIDE 2 : Agenda
+% SLIDE 2
 \begin{frame}{Agenda: The Lifecycle of an Agent}
     \begin{columns}[t]
         \column{0.5\textwidth}
@@ -124,6 +124,66 @@
 \end{frame}
 
 % SLIDE 4
+\begin{frame}{Sequential Decision-Making as a Unifying View}
+Agentic AI systems operate through \textbf{sequences of decisions} rather than single predictions.
+
+\begin{block}{Core Observation}
+An agent repeatedly:
+\begin{enumerate}
+    \item observes the environment,
+    \item reasons about the current situation,
+    \item selects an action,
+    \item receives new information.
+\end{enumerate}
+\end{block}
+
+This interaction pattern is studied in classical AI under
+\textbf{sequential decision-making models}, most notably
+Markov Decision Processes (MDPs) and their extensions.
+\end{frame}
+
+% SLIDE 5
+\begin{frame}{Markov Decision Processes (MDP)}
+A \textbf{Markov Decision Process (MDP)} formalizes decision-making in stochastic environments.
+
+\begin{block}{Definition}
+An MDP is a tuple:
+\[
+(\mathcal{S}, \mathcal{A}, P, R, \gamma)
+\]
+where $\mathcal{S}$ is the state space, $\mathcal{A}$ the action space,
+$P$ the transition model, $R$ the reward function, and $\gamma$ the discount factor.
+\end{block}
+
+\textbf{Markov property:}
+The current state fully summarizes the past.
+
+\textbf{Limitation:}
+MDPs assume \textbf{full observability} of the environment state.
+\end{frame}
+
+% SLIDE 6
+\begin{frame}{Partially Observable Markov Decision Processes (POMDP)}
+Real-world environments are often only \textbf{partially observable}.
+
+\begin{block}{Definition}
+A POMDP extends an MDP as:
+\[
+(\mathcal{S}, \mathcal{A}, P, R, \Omega, O, \gamma)
+\]
+where $\Omega$ is the observation space and
+$O(o \mid s, a)$ is the observation model.
+\end{block}
+
+The agent does not observe the true state $s_t$,
+but only an observation $o_t$ correlated with it.
+
+\textbf{Consequence:}
+Decision-making must account for \textbf{uncertainty about the state}.
+\end{frame}
+
+
+% SLIDE 7
 \begin{frame}{Anatomy of an Agent}
     An agent is not just an LLM. It is a compound system.
     \begin{enumerate}
@@ -143,7 +203,7 @@
     \end{alertblock}
 \end{frame}
 
-% SLIDE 5
+% SLIDE 8
 \begin{frame}{Cognitive Architectures: Reasoning Patterns}
     \begin{columns}
         \column{0.5\textwidth}
@@ -171,7 +231,7 @@
     \textbf{Reflexion:} An architecture where the agent critiques its own past trajectory to update a verbal memory buffer for the next attempt.
 \end{frame}
 
-% SLIDE 6
+% SLIDE 9
 \begin{frame}{Planning Strategies}
     \textbf{1. Single-Path Planning (Linear)}
     \begin{itemize}
@@ -200,7 +260,7 @@
     \end{block}
 \end{frame}
 
-% SLIDE 7
+% SLIDE 10
 \begin{frame}{Memory Systems: The Context Window Constraints}
     The "Goldfish Memory" problem is the primary limiter of complex agents.
     
@@ -219,7 +279,73 @@
     \end{itemize}
 \end{frame}
 
-% SLIDE 8
+% SLIDE 11
+\begin{frame}{Belief State and Planning under Partial Observability}
+In POMDPs, agents reason over a \textbf{belief state}.
+
+\begin{block}{Belief State}
+A belief $b_t(s)$ represents a probability distribution over states:
+\[
+b_t(s) = P(s_t = s \mid o_{1:t}, a_{1:t-1})
+\]
+\end{block}
+
+Planning and decision-making are performed over beliefs rather than true states.
+
+\textbf{Implications:}
+\begin{itemize}
+    \item Memory is required to integrate past observations.
+    \item Errors may arise from incorrect belief updates.
+    \item Perception and planning are tightly coupled.
+\end{itemize}
+\end{frame}
+
+% SLIDE 12
+\begin{frame}{From POMDPs to LLM-Based Agents}
+Modern LLM-based agents exhibit key characteristics of POMDP agents.
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{POMDP Concept} & \textbf{Agentic AI System} \\ \midrule
+Hidden state $s$ & True environment state (unknown) \\
+Observation $o$ & User input, tool output, retrieved context \\
+Belief $b$ & Agent memory and internal state \\
+Action $a$ & Tool call or response \\
+Policy $\pi$ & LLM prompting + decision logic \\ \bottomrule
+\end{tabular}
+\end{center}
+
+Agentic failures often stem from
+\textbf{incorrect belief updates} rather than from language generation errors.
+\end{frame}
+
+% SLIDE 13
+\begin{frame}{Tree of Thoughts and Sequential Decision Exploration}
+Tree of Thoughts (ToT) frames LLM reasoning as
+\textbf{explicit exploration of a decision tree}.
+
+\begin{block}{Key Idea (Yao et al., 2023)}
+\begin{itemize}
+    \item Each reasoning step corresponds to a decision.
+    \item Multiple candidate actions are explored.
+    \item An evaluation function selects promising branches.
+\end{itemize}
+\end{block}
+
+This mirrors planning in POMDPs:
+\begin{itemize}
+    \item belief expansion via multiple hypotheses,
+    \item evaluation of partial trajectories,
+    \item backtracking under uncertainty.
+\end{itemize}
+
+\textbf{Interpretation:}
+LLM agents perform \textbf{implicit belief-space search}.
+\end{frame}
+
+
+% SLIDE 14
 \begin{frame}{Tool Use \& Function Calling}
     Tools bridge the probabilistic LLM with deterministic code.
     
@@ -237,7 +363,7 @@
     \end{alertblock}
 \end{frame}
 
-% SLIDE 9
+% SLIDE 15
 \begin{frame}{RAG within Agents (Knowledge Augmentation)}
     Retrieval-Augmented Generation acts as the agent's \textbf{memory read-path}.
     
@@ -261,7 +387,7 @@
     \end{itemize}
 \end{frame}
 
-% SLIDE 10
+% SLIDE 16
 \begin{frame}{Evaluating the Memory Read-Path}
     \textbf{Evaluation Surface Expansion:}
     
@@ -279,8 +405,28 @@
     RAG failures are often \textit{memory system failures}, not reasoning errors.
 \end{frame}
 
+% SLIDE 17
+\begin{frame}{RAG as an Observation Model}
+In POMDPs, observations are noisy and incomplete.
 
-% SLIDE 11
+\begin{block}{Analogy}
+\begin{itemize}
+    \item \textbf{Observation model:} $O(o \mid s, a)$
+    \item \textbf{RAG pipeline:} query $\rightarrow$ retrieve $\rightarrow$ rank $\rightarrow$ context
+\end{itemize}
+\end{block}
+
+\textbf{Failure interpretation:}
+\begin{itemize}
+    \item Hallucination $\neq$ reasoning error
+    \item Hallucination = acting on a corrupted observation
+\end{itemize}
+
+This reframes retrieval quality as \textbf{perception accuracy}.
+\end{frame}
+
+
+% SLIDE 18
 \begin{frame}{Architectural Anti-Patterns}
     \begin{columns}
         \column{0.5\textwidth}
@@ -309,7 +455,7 @@
 
 % --- PART II: ORCHESTRATION ---
 
-% SLIDE 12
+% SLIDE 19
 \begin{frame}{Orchestration: Single vs. Multi-Agent Systems (MAS)}
     \begin{table}[]
         \begin{tabular}{@{}lll@{}}
@@ -329,7 +475,7 @@
 \end{frame}
 
 
-% SLIDE 13
+% SLIDE 20
 \begin{frame}{Pattern A: The Router (Gateway)}
     The simplest Orchestration pattern.
     
@@ -348,7 +494,7 @@
     \end{block}
 \end{frame}
 
-% SLIDE 14
+% SLIDE 21
 \begin{frame}{Pattern B: Hierarchical Teams (Boss-Worker)}
     \textbf{Structure:}
     \begin{itemize}
@@ -367,7 +513,7 @@
     \textit{Benefit:} Encapsulation. Workers don't see the full complexity, reducing hallucination.
 \end{frame}
 
-% SLIDE 15
+% SLIDE 22
 \begin{frame}{Pattern C: Sequential Handoffs (The Chain)}
     A state machine approach. State A must finish before State B starts.
     
@@ -383,7 +529,7 @@
     \end{itemize}
 \end{frame}
 
-% SLIDE 16
+% SLIDE 23
 \begin{frame}{Inter-Agent Communication Protocols}
     How do agents talk?
     
@@ -406,7 +552,7 @@
 \end{frame}
 
 
-% SLIDE 17
+% SLIDE 24
 \begin{frame}{State Management in Orchestration}
     In Agentic Systems, "State" is more than just variables.
     
@@ -425,7 +571,7 @@
     \end{itemize}
 \end{frame}
 
-% SLIDE 18
+% SLIDE 25
 \begin{frame}{Resilience and Error Recovery}
     Agents \textbf{will} fail. The architecture must be resilient.
     
@@ -451,7 +597,7 @@
 
 % --- PART III: OBSERVABILITY ---
 
-% SLIDE 19
+% SLIDE 26
 \begin{frame}{Observability: Seeing Inside the Agent's Mind}
     \textit{Reference: Agent Quality Whitepaper~\cite{google_agent_quality} (Ch.~3)}
     
@@ -465,7 +611,7 @@
     \textbf{The 3 Pillars:} Logging, Tracing, Metrics.
 \end{frame}
 
-% SLIDE 20
+% SLIDE 27
 \begin{frame}{Pillar 1: Logging (The Diary)}
     Logs are atomic, timestamped events.
     
@@ -482,7 +628,7 @@
     \end{alertblock}
 \end{frame}
 
-% SLIDE 21
+% SLIDE 28
 \begin{frame}{Pillar 2: Tracing (The Narrative)}
     Tracing connects individual logs into a causal chain (Trajectory).
     \textit{Standard: OpenTelemetry (OTEL)}
@@ -499,7 +645,7 @@
     \textit{Example:} User sees "Bad Answer". Trace shows: RAG Span returned 0 docs $\to$ LLM hallucinated. Fix the Retrieval, not the LLM.
 \end{frame}
 
-% SLIDE 22
+% SLIDE 29
 \begin{frame}{Pillar 3: Metrics (The Scorecard)}
     Aggregated data over time. Two categories:
     
@@ -524,7 +670,28 @@
 
 % --- PART IV: EVALUATION ---
 
-% SLIDE 23
+% SLIDE 30
+\begin{frame}{Agent Trajectories as Decision Episodes}
+Sequential decision-making evaluates entire episodes, not single actions.
+
+\begin{block}{Analogy}
+\begin{itemize}
+    \item \textbf{Episode:} complete agent trajectory
+    \item \textbf{Reward accumulation:} success, cost, safety
+\end{itemize}
+\end{block}
+
+\textbf{Consequence for evaluation:}
+\begin{itemize}
+    \item Correct output can result from poor decisions
+    \item Incorrect output may stem from early belief errors
+\end{itemize}
+
+Trajectory-level evaluation is therefore essential.
+\end{frame}
+
+
+% SLIDE 31
 \begin{frame}{Evaluation: The Outside-In Framework}
     \textit{Reference: Agent Quality Whitepaper~\cite{google_agent_quality} (Ch.~2)}
 
@@ -541,7 +708,7 @@
     \textit{Principle:} You cannot measure Efficiency if you only check the final answer. You need the Trajectory.
 \end{frame}
 
-% SLIDE 24
+% SLIDE 32
 \begin{frame}{Hierarchy of Eval: Black Box vs. Glass Box}
     \textbf{Level 1: Black Box (End-to-End)}
     \begin{itemize}
@@ -562,7 +729,7 @@
 \end{frame}
 
 
-% SLIDE 25
+% SLIDE 33
 \begin{frame}{Automated Metrics (The Low Bar)}
     Fast, cheap, deterministic. Use as a "First Gate" in CI/CD.
     
@@ -576,7 +743,7 @@
     \textit{Warning:} High cosine similarity does not guarantee factual correctness.
 \end{frame}
 
-% SLIDE 26
+% SLIDE 34
 \begin{frame}{LLM-as-a-Judge (The Scalable Critic)}
     Using a strong LLM (e.g., GPT-4o, Claude 3.5 Sonnet) to evaluate a weaker agent.
     
@@ -597,7 +764,7 @@
     \end{alertblock}
 \end{frame}
 
-% SLIDE 27
+% SLIDE 35
 \begin{frame}{Agent-as-a-Judge (Process Evaluator)}
     Evaluating the \textbf{Trajectory}, not just the output.
     
@@ -615,7 +782,7 @@
     This detects "Lucky Guesses"—correct answers derived from bad logic.
 \end{frame}
 
-% SLIDE 28
+% SLIDE 36
 \begin{frame}{Human-in-the-Loop (HITL) Evaluation}
     Humans are the arbiter of "Ground Truth".
     
@@ -633,7 +800,7 @@
     \end{itemize}
 \end{frame}
 
-% SLIDE 29
+% SLIDE 37
 \begin{frame}{Safety \& Red Teaming}
     Agents act in the real world. Safety is non-negotiable.
     
@@ -652,7 +819,7 @@
     \end{itemize}
 \end{frame}
 
-% SLIDE 30 — Hallucinations in Agentic Systems
+% SLIDE 38
 \begin{frame}{Hallucinations in Agentic Systems (and Why They Hurt More)}
 In agentic workflows, hallucinations can trigger \textbf{real actions}, not just wrong text.
 
@@ -673,7 +840,7 @@ Semantic-entropy methods estimate uncertainty at the level of \textit{meaning} (
 
 % --- Frameworks in Practice ---
 
-% SLIDE 31 — Common Agent Frameworks in Practice
+% SLIDE 39
 \begin{frame}{Common Agent Frameworks in Practice}
     Many agentic systems today are built using high-level development frameworks.
 
@@ -695,7 +862,7 @@ Semantic-entropy methods estimate uncertainty at the level of \textit{meaning} (
     \textit{These frameworks significantly lower the barrier to building agentic applications.}
 \end{frame}
 
-% SLIDE 32 — Persona vs Task-Oriented Agents
+% SLIDE 40
 \begin{frame}{Persona-based vs Task-oriented Agents}
 Two common paradigms for agentic applications:
 
@@ -720,7 +887,7 @@ Persona optimizes \textbf{experience}; task-orientation optimizes \textbf{succes
 \end{alertblock}
 \end{frame}
 
-% SLIDE 33 — Practice: LangChain as Building Blocks (LCEL)
+% SLIDE 41
 \begin{frame}[fragile]{Practice: LangChain as Building Blocks (LCEL)}
 \small
 LangChain is most useful when treated as \textbf{composable building blocks}:
@@ -765,7 +932,7 @@ print(msg.tool_calls)
 \end{frame}
 
 
-% SLIDE 34 — Practice: LangGraph State Machine
+% SLIDE 42
 \begin{frame}[fragile]{Practice: LangGraph State Machine (Minimal)}
 \small
 \begin{lstlisting}
@@ -800,7 +967,7 @@ LangGraph makes \textbf{state} and \textbf{control-flow} explicit:
 \end{frame}
 
 
-% SLIDE 35 — Practice: LangChain vs LangGraph
+% SLIDE 43
 \begin{frame}{Practice: LangChain vs LangGraph (Rule of Thumb)}
 \begin{itemize}
     \item \textbf{LangChain:} best for tool integration patterns (LLM + tools + memory).
@@ -824,7 +991,7 @@ Reusable agent components & LangChain \\ \bottomrule
 
 % --- Protocols: MCP & A2A ---
 
-% SLIDE 36 — Protocols: MCP vs A2A (Overview)
+% SLIDE 44
 \begin{frame}{Protocols: MCP vs A2A (Interoperability Layers)}
 Agentic systems are moving from \textit{framework glue-code} to \textit{standard protocols}.
 
@@ -846,7 +1013,7 @@ reducing bespoke integrations and improving scalability. \cite{li2025a2a_mcp}
 \end{block}
 \end{frame}
 
-% SLIDE 37 — MCP: Client–Host–Server architecture
+% SLIDE 45
 \begin{frame}{MCP: Tool Access as a Protocol (Client--Server)}
 \textbf{MCP (Model Context Protocol)} standardizes how an agent connects to external tools/data.
 
@@ -872,7 +1039,7 @@ MCP turns integrations into \textbf{discoverable, structured interfaces} rather 
 \end{block}
 \end{frame}
 
-% SLIDE 38 — A2A: Agent-to-Agent protocol
+% SLIDE 46
 \begin{frame}{A2A: Agent-to-Agent Communication as a Protocol}
 \textbf{A2A (Agent-to-Agent)} defines how autonomous agents interact with each other \textbf{without sharing runtime state}.
 
@@ -898,7 +1065,7 @@ A2A treats agents as \textbf{distributed systems components}, enabling scale, is
 \end{block}
 \end{frame}
 
-% SLIDE 39 — MCP vs A2A vs Frameworks
+% SLIDE 47
 \begin{frame}{MCP vs A2A vs Frameworks: Who Does What?}
 \small
 
@@ -928,7 +1095,7 @@ Protocols solve \textbf{system scalability and governance}. \cite{li2025a2a_mcp}
 \end{block}
 \end{frame}
 
-% SLIDE 40 — When to use (or not use) MCP/A2A
+% SLIDE 48
 \begin{frame}{When (and When Not) to Use MCP / A2A}
 \textbf{Use MCP or A2A when:}
 \begin{itemize}
@@ -953,7 +1120,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
 \end{alertblock}
 \end{frame}
 
-% SLIDE 41
+% SLIDE 49
 \begin{frame}{The Agent Quality Flywheel}
     \textit{Reference: Agent Quality Whitepaper~\cite{google_agent_quality} (Ch.~4)}
     
@@ -976,7 +1143,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
     \textbf{Key Concept:} Every production failure, once annotated, becomes a regression test. The system gets smarter with every error.
 \end{frame}
 
-% SLIDE 42
+% SLIDE 50
 \begin{frame}{Creating a "Golden Dataset"}
     Evaluation is impossible without a benchmark.
     
@@ -993,7 +1160,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
     \end{enumerate}
 \end{frame}
 
-% SLIDE 43
+% SLIDE 51
 \begin{frame}{Deployment Strategies (Ops)}
     \textbf{Shadow Mode:}
     Run the new agent alongside the old one. User sees Old, you log New. Compare outputs offline.
@@ -1005,7 +1172,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
     For high-stakes tools (e.g., \texttt{transfer\_money}), the agent pauses and asks a human for approval via a UI before executing the tool.
 \end{frame}
 
-% SLIDE 44
+% SLIDE 52
 \begin{frame}{Future Trends}
     \begin{itemize}
         \item \textbf{Standardized Interfaces:} The "Agent Protocol" (standardizing how agents talk to tools).
@@ -1015,7 +1182,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
     \end{itemize}
 \end{frame}
 
-% SLIDE 45
+% SLIDE 53
 \begin{frame}{Conclusion \& Key Takeaways}
     \begin{enumerate}
         \item \textbf{Architecture:} Design for decomposition. Don't build God Agents. Use State Machines for reliability.
@@ -1026,18 +1193,32 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
 
 \end{frame}
 
-% SLIDE 46 : REFERENCES
+% SLIDE 54
 \begin{frame}[allowframebreaks]{References}
 \footnotesize
 
 \begin{thebibliography}{99}
 \beamertemplatebookbibitems
 
+\bibitem{sutton2018}
+R. S. Sutton and A. G. Barto.
+\newblock \emph{Reinforcement Learning: An Introduction}.
+\newblock MIT Press, 2nd edition, 2018.
+
+\bibitem{kaelbling1998}
+L. P. Kaelbling, M. L. Littman, and A. R. Cassandra.
+\newblock \emph{Planning and Acting in Partially Observable Stochastic Domains}.
+\newblock \emph{Artificial Intelligence}, 101(1--2):99--134, 1998.
+
+\bibitem{yao2023}
+S. Yao, Y. Zhou, D. Yang, et al.
+\newblock \emph{Tree of Thoughts: Deliberate Problem Solving with Large Language Models}.
+\newblock \emph{arXiv preprint arXiv:2305.10601}, 2023.
+
 \bibitem{google_agent_quality}
 Google.
 \newblock \emph{Agent Quality (Whitepaper)}.
 \newblock Kaggle, 2025. \url{https://www.kaggle.com/whitepaper-agent-quality}
-
 
 \bibitem{langchain}
 LangChain.
@@ -1083,7 +1264,7 @@ Q. Li and Y. Xie.
 \end{frame}
 
 
-% SLIDE 47
+% SLIDE 55
 \begin{frame}{Acknowledgements}
 \centering
       We would like to thank student Martina Speciale\\ for her contribution to improving this tutorial.
