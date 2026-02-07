@@ -1,9 +1,5 @@
 \documentclass[9pt]{beamer}
 
-\usepackage[backend=bibtex,style=numeric]{biblatex}
-\addbibresource{references.bib}
-
-
 % --- Theme and Packages ---
 \usetheme{Madrid}
 \usecolortheme{beaver}
@@ -13,6 +9,17 @@
 \usepackage{tikz}
 \usepackage{amsmath}
 \usepackage{ragged2e}
+
+% --- Custom Definitions ---
+\definecolor{googleblue}{RGB}{66, 133, 244}
+\definecolor{googlered}{RGB}{219, 68, 55}
+\definecolor{googleyellow}{RGB}{244, 180, 0}
+\definecolor{googlegreen}{RGB}{15, 157, 88}
+\definecolor{darkgray}{gray}{0.3}
+
+\setbeamercolor{block title}{bg=googleblue,fg=white}
+\setbeamercolor{alerted text}{fg=googlered}
+\setbeamercolor{structure}{fg=darkgray}
 
 % --- Code Style ---
 \lstset{
@@ -29,15 +36,6 @@
     columns=fullflexible
 }
 
-% --- Custom Definitions ---
-\definecolor{googleblue}{RGB}{66, 133, 244}
-\definecolor{googlered}{RGB}{219, 68, 55}
-\definecolor{googleyellow}{RGB}{244, 180, 0}
-\definecolor{googlegreen}{RGB}{15, 157, 88}
-
-\setbeamercolor{block title}{bg=googleblue,fg=white}
-\setbeamercolor{alerted text}{fg=googlered}
-\setbeamercolor{structure}{fg=darkgray}
 
 % --- Title ---
 \title[Agentic AI: Arch to Ops]{Agentic AI: From Architecture to Orchestration and Quality}
@@ -96,7 +94,7 @@
 % --- PART I: FOUNDATIONS ---
 
 % SLIDE 3
-\begin{frame}{1. The Era of Agentic AI: A Paradigm Shift}
+\begin{frame}{The Era of Agentic AI: A Paradigm Shift}
     \begin{block}{From Model-Centric to System-Centric}
         Traditional AI (Passive): Input $\to$ Model $\to$ Output. \\
         \textbf{Agentic AI (Active):} Intent $\to$ Plan $\to$ Action $\to$ Observation $\to$ Update $\to$ Action...
@@ -122,7 +120,7 @@
 \end{frame}
 
 % SLIDE 4
-\begin{frame}{2. Anatomy of an Agent}
+\begin{frame}{Anatomy of an Agent}
     An agent is not just an LLM. It is a compound system.
     \begin{enumerate}
         \item \textbf{The Brain (LLM):} Reasoning engine. Responsible for planning and tool selection.
@@ -142,7 +140,7 @@
 \end{frame}
 
 % SLIDE 5
-\begin{frame}{3. Cognitive Architectures: Reasoning Patterns}
+\begin{frame}{Cognitive Architectures: Reasoning Patterns}
     \begin{columns}
         \column{0.5\textwidth}
         \textbf{ReAct (Reasoning + Acting)}
@@ -170,7 +168,7 @@
 \end{frame}
 
 % SLIDE 6
-\begin{frame}{4. Planning Strategies}
+\begin{frame}{Planning Strategies}
     \textbf{1. Single-Path Planning (Linear)}
     \begin{itemize}
         \item Agent generates steps A, B, C, D immediately.
@@ -199,7 +197,7 @@
 \end{frame}
 
 % SLIDE 7
-\begin{frame}{5. Memory Systems: The Context Window Constraints}
+\begin{frame}{Memory Systems: The Context Window Constraints}
     The "Goldfish Memory" problem is the primary limiter of complex agents.
     
     \textbf{Memory Types:}
@@ -218,7 +216,7 @@
 \end{frame}
 
 % SLIDE 8
-\begin{frame}{6. Tool Use \& Function Calling}
+\begin{frame}{Tool Use \& Function Calling}
     Tools bridge the probabilistic LLM with deterministic code.
     
     \textbf{The Workflow:}
@@ -236,7 +234,7 @@
 \end{frame}
 
 % SLIDE 9
-\begin{frame}{7. RAG within Agents (Knowledge Augmentation)}
+\begin{frame}{RAG within Agents (Knowledge Augmentation)}
     Retrieval-Augmented Generation acts as the agent's \textbf{memory read-path}.
     
     \textbf{Read-Path Components:}
@@ -260,7 +258,7 @@
 \end{frame}
 
 % SLIDE 10
-\begin{frame}{8. Evaluating the Memory Read-Path}
+\begin{frame}{Evaluating the Memory Read-Path}
     \textbf{Evaluation Surface Expansion:}
     
     When an agent fails, was it the \textit{Reasoning} or the \textit{Memory Read-Path}?
@@ -279,7 +277,7 @@
 
 
 % SLIDE 11
-\begin{frame}{9. Architectural Anti-Patterns}
+\begin{frame}{Architectural Anti-Patterns}
     \begin{columns}
         \column{0.5\textwidth}
         \textcolor{googlered}{\textbf{1. The God Agent}}
@@ -308,7 +306,7 @@
 % --- PART II: ORCHESTRATION ---
 
 % SLIDE 12
-\begin{frame}{10. Orchestration: Single vs. Multi-Agent Systems (MAS)}
+\begin{frame}{Orchestration: Single vs. Multi-Agent Systems (MAS)}
     \begin{table}[]
         \begin{tabular}{@{}lll@{}}
             \toprule
@@ -328,7 +326,7 @@
 
 
 % SLIDE 13
-\begin{frame}{11. Pattern A: The Router (Gateway)}
+\begin{frame}{Pattern A: The Router (Gateway)}
     The simplest Orchestration pattern.
     
     \begin{itemize}
@@ -347,7 +345,7 @@
 \end{frame}
 
 % SLIDE 14
-\begin{frame}{12. Pattern B: Hierarchical Teams (Boss-Worker)}
+\begin{frame}{Pattern B: Hierarchical Teams (Boss-Worker)}
     \textbf{Structure:}
     \begin{itemize}
         \item \textbf{Root (Manager):} Decomposes task. Cannot use tools. Only talks to Workers.
@@ -366,7 +364,7 @@
 \end{frame}
 
 % SLIDE 15
-\begin{frame}{13. Pattern C: Sequential Handoffs (The Chain)}
+\begin{frame}{Pattern C: Sequential Handoffs (The Chain)}
     A state machine approach. State A must finish before State B starts.
     
     \begin{center}
@@ -382,7 +380,7 @@
 \end{frame}
 
 % SLIDE 16
-\begin{frame}{14. Inter-Agent Communication Protocols}
+\begin{frame}{Inter-Agent Communication Protocols}
     How do agents talk?
     
     \textbf{1. Shared Blackboard (Memory)}
@@ -405,7 +403,7 @@
 
 
 % SLIDE 17
-\begin{frame}{15. State Management in Orchestration}
+\begin{frame}{State Management in Orchestration}
     In Agentic Systems, "State" is more than just variables.
     
     \textbf{The State Object:}
@@ -424,7 +422,7 @@
 \end{frame}
 
 % SLIDE 18
-\begin{frame}{16. Resilience and Error Recovery}
+\begin{frame}{Resilience and Error Recovery}
     Agents \textbf{will} fail. The architecture must be resilient.
     
     \begin{enumerate}
@@ -450,7 +448,7 @@
 % --- PART III: OBSERVABILITY ---
 
 % SLIDE 19
-\begin{frame}{17. Observability: Seeing Inside the Agent's Mind}
+\begin{frame}{Observability: Seeing Inside the Agent's Mind}
     \textit{Reference: Agent Quality Whitepaper, Chapter 3}
     
     \textbf{The "Kitchen Analogy"}
@@ -464,7 +462,7 @@
 \end{frame}
 
 % SLIDE 20
-\begin{frame}{18. Pillar 1: Logging (The Diary)}
+\begin{frame}{Pillar 1: Logging (The Diary)}
     Logs are atomic, timestamped events.
     
     \textbf{Best Practices:}
@@ -481,7 +479,7 @@
 \end{frame}
 
 % SLIDE 21
-\begin{frame}{19. Pillar 2: Tracing (The Narrative)}
+\begin{frame}{Pillar 2: Tracing (The Narrative)}
     Tracing connects individual logs into a causal chain (Trajectory).
     \textit{Standard: OpenTelemetry (OTEL)}
     
@@ -498,7 +496,7 @@
 \end{frame}
 
 % SLIDE 22
-\begin{frame}{20. Pillar 3: Metrics (The Scorecard)}
+\begin{frame}{Pillar 3: Metrics (The Scorecard)}
     Aggregated data over time. Two categories:
     
     \begin{columns}
@@ -523,7 +521,7 @@
 % --- PART IV: EVALUATION ---
 
 % SLIDE 23
-\begin{frame}{21. Evaluation: The Outside-In Framework}
+\begin{frame}{Evaluation: The Outside-In Framework}
     \textit{Reference: Agent Quality Whitepaper, Chapter 2}
     
     Traditional QA (Unit Tests) verifies logic. AI Evaluation validates \textbf{Intent}.
@@ -540,7 +538,7 @@
 \end{frame}
 
 % SLIDE 24
-\begin{frame}{22. Hierarchy of Eval: Black Box vs. Glass Box}
+\begin{frame}{Hierarchy of Eval: Black Box vs. Glass Box}
     \textbf{Level 1: Black Box (End-to-End)}
     \begin{itemize}
         \item Input: User prompt. Output: Final agent response.
@@ -561,7 +559,7 @@
 
 
 % SLIDE 25
-\begin{frame}{23. Automated Metrics (The Low Bar)}
+\begin{frame}{Automated Metrics (The Low Bar)}
     Fast, cheap, deterministic. Use as a "First Gate" in CI/CD.
     
     \begin{itemize}
@@ -575,7 +573,7 @@
 \end{frame}
 
 % SLIDE 26
-\begin{frame}{24. LLM-as-a-Judge (The Scalable Critic)}
+\begin{frame}{LLM-as-a-Judge (The Scalable Critic)}
     Using a strong LLM (e.g., GPT-4o, Claude 3.5 Sonnet) to evaluate a weaker agent.
     
     \textbf{Single-Point Scoring:}
@@ -596,7 +594,7 @@
 \end{frame}
 
 % SLIDE 27
-\begin{frame}{25. Agent-as-a-Judge (Process Evaluator)}
+\begin{frame}{Agent-as-a-Judge (Process Evaluator)}
     Evaluating the \textbf{Trajectory}, not just the output.
     
     \textbf{How it works:}
@@ -614,7 +612,7 @@
 \end{frame}
 
 % SLIDE 28
-\begin{frame}{26. Human-in-the-Loop (HITL) Evaluation}
+\begin{frame}{Human-in-the-Loop (HITL) Evaluation}
     Humans are the arbiter of "Ground Truth".
     
     \textbf{When to use HITL:}
@@ -632,7 +630,7 @@
 \end{frame}
 
 % SLIDE 29
-\begin{frame}{27. Safety \& Red Teaming}
+\begin{frame}{Safety \& Red Teaming}
     Agents act in the real world. Safety is non-negotiable.
     
     \textbf{Attack Vectors:}
@@ -650,9 +648,109 @@
     \end{itemize}
 \end{frame}
 
+% --- Frameworks in Practice ---
 
-% SLIDE 30
-\begin{frame}{28. The Agent Quality Flywheel}
+% SLIDE 30 — Common Agent Frameworks in Practice
+\begin{frame}{Common Agent Frameworks in Practice}
+    Many agentic systems today are built using high-level development frameworks.
+
+    \begin{itemize}
+        \item \textbf{LangChain:}
+        \begin{itemize}
+            \item Abstraction layer for LLMs, tools, and memory.
+            \item Tool invocation via SDKs and function calls.
+        \end{itemize}
+
+        \item \textbf{LangGraph:}
+        \begin{itemize}
+            \item Explicit control-flow using graphs (loops, branches).
+            \item Stateful execution and multi-agent coordination \textit{within a single runtime}.
+        \end{itemize}
+    \end{itemize}
+
+    \vspace{0.3cm}
+    \textit{These frameworks significantly lower the barrier to building agentic applications.}
+\end{frame}
+
+% SLIDE 31 — Practice: LangChain Tool Calling
+\begin{frame}[fragile]{Practice: LangChain Tool Calling (Minimal)}
+\small
+\begin{lstlisting}
+from langchain_openai import ChatOpenAI
+from langchain.tools import tool
+
+@tool
+def add(a: int, b: int) -> int:
+    """Add two integers."""
+    return a + b
+
+llm = ChatOpenAI(model="gpt-4o-mini")
+agent = llm.bind_tools([add])
+
+response = agent.invoke("What is 19 + 23? Use the tool.")
+print(response)
+\end{lstlisting}
+
+\textit{Key idea:} Tool integration becomes a reusable pattern, not ad-hoc glue code.
+\end{frame}
+
+% SLIDE 32 — Practice: LangGraph State Machine
+\begin{frame}[fragile]{Practice: LangGraph State Machine (Minimal)}
+\small
+\begin{lstlisting}
+from typing import TypedDict
+from langgraph.graph import StateGraph, END
+
+class State(TypedDict):
+    n: int
+
+def step(state: State) -> State:
+    state["n"] += 1
+    return state
+
+def should_stop(state: State) -> str:
+    return END if state["n"] >= 3 else "step"
+
+g = StateGraph(State)
+g.add_node("step", step)
+g.set_entry_point("step")
+g.add_conditional_edges("step", should_stop, {
+    "step": "step",
+    END: END
+})
+
+app = g.compile()
+print(app.invoke({"n": 0}))
+\end{lstlisting}
+
+\textit{Key idea:} Control-flow is explicit (graphs), not hidden inside prompts.
+\end{frame}
+
+% SLIDE 33 — Practice: LangChain vs LangGraph
+\begin{frame}{Practice: LangChain vs LangGraph (Rule of Thumb)}
+\begin{itemize}
+    \item \textbf{LangChain:} best for tool integration patterns (LLM + tools + memory).
+    \item \textbf{LangGraph:} best for reliable orchestration (loops, branches, retries).
+\end{itemize}
+
+\vspace{0.3cm}
+
+\begin{table}[]
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Need} & \textbf{Best Fit} \\ \midrule
+Tool calling and parsing & LangChain \\
+Stateful workflows & LangGraph \\
+Retries and branching logic & LangGraph \\
+Reusable agent components & LangChain \\ \bottomrule
+\end{tabular}
+\end{table}
+\end{frame}
+
+
+% SLIDE 34
+\begin{frame}{The Agent Quality Flywheel}
     \textit{Reference: Agent Quality Whitepaper, Chapter 4}
     
     Continuous Improvement Loop:
@@ -674,8 +772,8 @@
     \textbf{Key Concept:} Every production failure, once annotated, becomes a regression test. The system gets smarter with every error.
 \end{frame}
 
-% SLIDE 31
-\begin{frame}{29. Creating a "Golden Dataset"}
+% SLIDE 35
+\begin{frame}{Creating a "Golden Dataset"}
     Evaluation is impossible without a benchmark.
     
     \textbf{Recipe for a Golden Set:}
@@ -691,8 +789,8 @@
     \end{enumerate}
 \end{frame}
 
-% SLIDE 32
-\begin{frame}{30. Deployment Strategies (Ops)}
+% SLIDE 36
+\begin{frame}{Deployment Strategies (Ops)}
     \textbf{Shadow Mode:}
     Run the new agent alongside the old one. User sees Old, you log New. Compare outputs offline.
     
@@ -703,8 +801,8 @@
     For high-stakes tools (e.g., \texttt{transfer\_money}), the agent pauses and asks a human for approval via a UI before executing the tool.
 \end{frame}
 
-% SLIDE 33 
-\begin{frame}{31. Future Trends}
+% SLIDE 37
+\begin{frame}{Future Trends}
     \begin{itemize}
         \item \textbf{Standardized Interfaces:} The "Agent Protocol" (standardizing how agents talk to tools).
         \item \textbf{Small Language Models (SLMs):} Running agents on-device for privacy/latency.
@@ -713,8 +811,8 @@
     \end{itemize}
 \end{frame}
 
-% SLIDE 34 
-\begin{frame}{32. Conclusion \& Key Takeaways}
+% SLIDE 38
+\begin{frame}{Conclusion \& Key Takeaways}
     \begin{enumerate}
         \item \textbf{Architecture:} Design for decomposition. Don't build God Agents. Use State Machines for reliability.
         \item \textbf{Orchestration:} Complexity kills. Start simple (Router), evolve to Multi-Agent only when necessary.
@@ -724,15 +822,29 @@
 
 \end{frame}
 
-% SLIDE 35: REFERENCES
+% SLIDE 39: REFERENCES 
 \begin{frame}[allowframebreaks]{References}
-    \printbibliography
+\footnotesize
+\begin{thebibliography}{99}
+
+\bibitem{first}
+Author(s). \emph{Title}. Venue/Publisher, Year.
+
+\bibitem{second}
+Author(s). \emph{Title}. Venue/Publisher, Year.
+
+\bibitem{langchain}
+Author(s). \emph{Title}. Year. \texttt{https://...}
+
+% more \bibitem entries to be added for each referred paper
+
+\end{thebibliography}
 \end{frame}
 
 
 
-% SLIDE 36
-\begin{frame}{33. Acknowledgements}
+% SLIDE 40
+\begin{frame}{Acknowledgements}
 \centering
       We would like to thank student Martina Speciale\\ for her contribution to improving this tutorial.
 \end{frame}
