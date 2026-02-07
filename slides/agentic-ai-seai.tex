@@ -185,23 +185,37 @@ Decision-making must account for \textbf{uncertainty about the state}.
 
 % SLIDE 7
 \begin{frame}{Anatomy of an Agent}
-    An agent is not just an LLM. It is a compound system.
-    \begin{enumerate}
-        \item \textbf{The Brain (LLM):} Reasoning engine. Responsible for planning and tool selection.
-        \item \textbf{Planning Module:} Decomposes high-level goals into sub-tasks (Chain-of-Thought, CoT).
+An agent is not just an LLM. It is a compound system.
 
-        \item \textbf{Memory (State):} 
-        \begin{itemize}
-            \item \textit{Short-term:} Current context window, scratchpad.
-            \item \textit{Long-term:} Vector DB (RAG), SQL, Graph.
-        \end{itemize}
-        \item \textbf{Tools (Action Space):} APIs, Code Interpreter, Search, File I/O.
-    \end{enumerate}
-    
-    \begin{alertblock}{Practical Trick: The System Prompt}
-        Don't just define personality. Define the \textbf{Output Schema} strictly. Use XML tags or JSON enforcement to ensure the "Brain" connects to the "Tools" deterministically.
-    \end{alertblock}
+\begin{enumerate}
+    \item \textbf{Decision Policy (LLM + Prompting):}
+    Proposes plans, intermediate steps, and tool calls.
+
+    \item \textbf{Controller (Runtime Logic):}
+    Deterministic enforcement of:
+    \begin{itemize}
+        \item stop conditions (max steps / max time),
+        \item budgets (tokens / cost),
+        \item retries, fallbacks, and output validation.
+    \end{itemize}
+
+    \item \textbf{Memory (State):}
+    \begin{itemize}
+        \item \textit{Short-term:} context window, working state.
+        \item \textit{Long-term:} vector DB (RAG), SQL, knowledge graph.
+    \end{itemize}
+
+    \item \textbf{Tools (Action Space):}
+    APIs, code execution, search, file I/O.
+\end{enumerate}
+
+\begin{alertblock}{Practical Trick: The System Prompt}
+Don't just define personality. Define a strict \textbf{output schema}
+(e.g., JSON schema / XML tags) so tool interfaces are \textbf{well-specified and verifiable},
+reducing variance in tool calls.
+\end{alertblock}
 \end{frame}
+
 
 % SLIDE 8
 \begin{frame}{Cognitive Architectures: Reasoning Patterns}
@@ -233,31 +247,34 @@ Decision-making must account for \textbf{uncertainty about the state}.
 
 % SLIDE 9
 \begin{frame}{Planning Strategies}
-    \textbf{1. Single-Path Planning (Linear)}
-    \begin{itemize}
-        \item Agent generates steps A, B, C, D immediately.
-        \item \textit{Failure Mode:} Step B output invalidates Step C pre-requisites.
-    \end{itemize}
+\textbf{1. Single-Path Planning (Linear)}
+\begin{itemize}
+    \item Agent generates steps A, B, C, D immediately.
+    \item \textit{Failure mode:} Early mistakes invalidate later steps.
+\end{itemize}
 
-    \textbf{2. Interleaved Planning (Dynamic)}
-    \begin{itemize}
-        \item Plan Step A $\to$ Execute A $\to$ Observe $\to$ Plan Step B.
-        \item \textit{Theory:} Optimizes for environmental uncertainty.
-    \end{itemize}
+\textbf{2. Interleaved Planning (Dynamic)}
+\begin{itemize}
+    \item Plan Step A $\rightarrow$ Execute A $\rightarrow$ Observe $\rightarrow$ Plan Step B.
+    \item Adapts to uncertainty and non-deterministic environments.
+\end{itemize}
 
-    \textbf{3. Hierarchical Planning (Manager-Worker)}
-    \begin{itemize}
-        \item \textbf{Planner Agent:} Generates the DAG (Directed Acyclic Graph) of tasks.
-        \item \textbf{Executor Agents:} Complete individual nodes.
-    \end{itemize}
+\textbf{3. Hierarchical Planning (Manager--Worker)}
+\begin{itemize}
+    \item \textbf{Planner agent:} Generates a task decomposition (DAG).
+    \item \textbf{Executor agents:} Solve individual sub-tasks.
+\end{itemize}
 
-    \begin{block}{Practical Trick}
-        Force the agent to output a \textbf{Confidence Score} (0--1) alongside its plan.
-        \begin{itemize}
-            \item If confidence $< 0.7$, trigger a Human-in-the-Loop (HITL) review before execution.
-            \item \textbf{Warning:} LLM confidence scores are often \textit{uncalibrated} and may appear high even when the plan is incorrect.
-        \end{itemize}
-    \end{block}
+\begin{block}{Practical Gating Signals (Beyond Confidence Scores)}
+Agents may emit a self-reported confidence score, but it is often \textbf{uncalibrated}.
+
+\textbf{More reliable escalation signals:}
+\begin{itemize}
+    \item empty or low-quality retrieval results,
+    \item repeated tool failures with identical inputs,
+    \item disagreement across multiple sampled plans.
+\end{itemize}
+\end{block}
 \end{frame}
 
 % SLIDE 10
