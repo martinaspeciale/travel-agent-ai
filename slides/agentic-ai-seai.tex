@@ -25,7 +25,7 @@
 % --- Code Style ---
 \lstset{
     language=Python,
-    basicstyle=\ttfamily\small,
+    basicstyle=\ttfamily\footnotesize,
     keywordstyle=\color{googleblue}\bfseries,
     stringstyle=\color{googlegreen},
     commentstyle=\color{gray}\itshape,
@@ -33,9 +33,12 @@
     frame=single,
     rulecolor=\color{black!30},
     breaklines=true,
+    breakatwhitespace=true,
+    postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space},
     tabsize=2,
     columns=fullflexible
 }
+
 
 
 % --- Title ---
@@ -773,26 +776,31 @@ class State(TypedDict):
     n: int
 
 def step(state: State) -> State:
-    state["n"] += 1
-    return state
+    # update explicit state
+    return {"n": state["n"] + 1}
 
-def should_stop(state: State) -> str:
+def route(state: State) -> str:
+    # explicit stop condition
     return END if state["n"] >= 3 else "step"
 
 g = StateGraph(State)
 g.add_node("step", step)
 g.set_entry_point("step")
-g.add_conditional_edges("step", should_stop, {
+g.add_conditional_edges("step", route, {
     "step": "step",
     END: END
 })
 
 app = g.compile()
-print(app.invoke({"n": 0}))
+print(app.invoke({"n": 0}))  # {'n': 3}
 \end{lstlisting}
 
-\textit{Key idea:} Control-flow is explicit (graphs), not hidden inside prompts.
+\begin{block}{Key idea}
+LangGraph makes \textbf{state} and \textbf{control-flow} explicit:
+\textit{update state} $\rightarrow$ \textit{route} $\rightarrow$ loop/stop.
+\end{block}
 \end{frame}
+
 
 % SLIDE 35 — Practice: LangChain vs LangGraph
 \begin{frame}{Practice: LangChain vs LangGraph (Rule of Thumb)}
