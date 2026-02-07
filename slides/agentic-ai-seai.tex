@@ -773,6 +773,32 @@ reducing bespoke integrations and improving scalability. \cite{li2025a2a_mcp}
 \end{block}
 \end{frame}
 
+% SLIDE 35 — MCP: Client–Host–Server architecture
+\begin{frame}{MCP: Tool Access as a Protocol (Client--Server)}
+\textbf{MCP (Model Context Protocol)} standardizes how an agent connects to external tools/data.
+
+\vspace{0.15cm}
+\textbf{Architecture (high level):} \cite{mcp_spec}
+\begin{itemize}
+    \item \textbf{Host:} the application running the agent (e.g., IDE, chatbot, service).
+    \item \textbf{Client:} manages the MCP session inside the host.
+    \item \textbf{Server:} exposes capabilities with clear boundaries.
+\end{itemize}
+
+\vspace{0.15cm}
+\textbf{Server-exposed primitives:} \cite{mcp_spec}
+\begin{itemize}
+    \item \textbf{Tools:} callable actions (schema + name).
+    \item \textbf{Resources:} retrievable context/data objects.
+    \item \textbf{Prompts:} reusable prompt templates (optional, server-provided).
+\end{itemize}
+
+\vspace{0.15cm}
+\begin{block}{Key idea}
+MCP turns integrations into \textbf{discoverable, structured interfaces} rather than app-specific glue code. \cite{li2025a2a_mcp}
+\end{block}
+\end{frame}
+
 
 % SLIDE 
 \begin{frame}{The Agent Quality Flywheel}
