@@ -320,7 +320,7 @@
         \end{tabular}
     \end{table}
     
-    \textbf{The Law of MAS (Refined):}  
+    \textbf{The Law of MAS:}  
     Communication complexity grows \textit{quadratically} only in \textbf{unstructured swarms} with all-to-all interactions.  
     Structured orchestration (roles, hierarchies, routing) reduces coordination overhead.
 \end{frame}
@@ -717,27 +717,50 @@ Persona optimizes \textbf{experience}; task-orientation optimizes \textbf{succes
 \end{alertblock}
 \end{frame}
 
-% SLIDE 33 — Practice: LangChain Tool Calling
-\begin{frame}[fragile]{Practice: LangChain Tool Calling (Minimal)}
+% SLIDE 33 — Practice: LangChain as Building Blocks (LCEL)
+\begin{frame}[fragile]{Practice: LangChain as Building Blocks (LCEL)}
 \small
+LangChain is most useful when treated as \textbf{composable building blocks}:
+\texttt{Prompt} $\rightarrow$ \texttt{Model} $\rightarrow$ (\texttt{Tools}) $\rightarrow$ \texttt{Output}.
+
+\vspace{0.2cm}
+\textbf{LCEL (LangChain Expression Language)} lets you compose steps with \texttt{|}.
+
+\vspace{0.15cm}
 \begin{lstlisting}
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain.tools import tool
+from langchain_core.tools import tool
 
 @tool
 def add(a: int, b: int) -> int:
     """Add two integers."""
     return a + b
 
-llm = ChatOpenAI(model="gpt-4o-mini")
-agent = llm.bind_tools([add])
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "If math is needed, call the add tool. Return the final answer."),
+    ("human", "{question}")
+])
 
-response = agent.invoke("What is 19 + 23? Use the tool.")
-print(response)
+llm = ChatOpenAI(model="gpt-4o-mini").bind_tools([add])
+
+chain = prompt | llm
+
+msg = chain.invoke({"question": "Compute 19 + 23 using the tool."})
+
+# The model proposes tool calls (if any):
+print(msg.tool_calls)
 \end{lstlisting}
 
-\textit{Key idea:} Tool integration becomes a reusable pattern, not ad-hoc glue code.
+\vspace{0.15cm}
+\begin{block}{What this shows (and what it does NOT)}
+\begin{itemize}
+    \item \textbf{Shows:} clean composition (prompt + model) and \textbf{structured tool-call requests}.
+    \item \textbf{Does NOT show:} tool execution loop / retries / branching (that is \textbf{LangGraph}).
+\end{itemize}
+\end{block}
 \end{frame}
+
 
 % SLIDE 34 — Practice: LangGraph State Machine
 \begin{frame}[fragile]{Practice: LangGraph State Machine (Minimal)}
