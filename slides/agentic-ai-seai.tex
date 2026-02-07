@@ -856,6 +856,30 @@ Protocols solve \textbf{system scalability and governance}. \cite{li2025a2a_mcp}
 \end{block}
 \end{frame}
 
+% SLIDE 38 — When to use (or not use) MCP/A2A
+\begin{frame}{When (and When Not) to Use MCP / A2A}
+\textbf{Use MCP or A2A when:}
+\begin{itemize}
+    \item Agents are owned by \textbf{different teams or organizations}.
+    \item You need \textbf{language-agnostic} or vendor-neutral integration.
+    \item Security boundaries and auditability matter.
+    \item Agents must evolve independently.
+\end{itemize}
+
+\vspace{0.25cm}
+\textbf{Avoid MCP/A2A when:}
+\begin{itemize}
+    \item You are prototyping or teaching fundamentals.
+    \item Agents share tight control-flow and state.
+    \item Latency must be extremely low.
+\end{itemize}
+
+\vspace{0.25cm}
+\begin{alertblock}{Rule of thumb}
+\textbf{Start with LangChain/LangGraph.}  
+Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
+\end{alertblock}
+\end{frame}
 
 % SLIDE 
 \begin{frame}{The Agent Quality Flywheel}
