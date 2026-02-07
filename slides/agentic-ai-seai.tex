@@ -9,6 +9,7 @@
 \usepackage{tikz}
 \usepackage{amsmath}
 \usepackage{ragged2e}
+\usepackage{url}
 
 % --- Custom Definitions ---
 \definecolor{googleblue}{RGB}{66, 133, 244}
@@ -748,8 +749,32 @@ Reusable agent components & LangChain \\ \bottomrule
 \end{table}
 \end{frame}
 
+% --- Protocols: MCP & A2A ---
 
-% SLIDE 34
+% SLIDE 34 — Protocols: MCP vs A2A (Overview)
+\begin{frame}{Protocols: MCP vs A2A (Interoperability Layers)}
+Agentic systems are moving from \textit{framework glue-code} to \textit{standard protocols}.
+
+\vspace{0.2cm}
+\textbf{Two complementary layers:}
+\begin{itemize}
+    \item \textbf{MCP (Model Context Protocol):} standard interface for \textbf{tool/data access} (agent $\leftrightarrow$ environment). \cite{mcp_spec}
+    \item \textbf{A2A (Agent-to-Agent):} standard interface for \textbf{agent communication} (agent $\leftrightarrow$ agent). \cite{a2a_announce}
+\end{itemize}
+
+\vspace{0.2cm}
+\begin{block}{Why this matters}
+With shared protocols, agents can:
+\begin{itemize}
+    \item reuse tools across apps (MCP) and
+    \item collaborate across vendors/frameworks (A2A),
+\end{itemize}
+reducing bespoke integrations and improving scalability. \cite{li2025a2a_mcp}
+\end{block}
+\end{frame}
+
+
+% SLIDE 
 \begin{frame}{The Agent Quality Flywheel}
     \textit{Reference: Agent Quality Whitepaper, Chapter 4}
     
@@ -772,7 +797,7 @@ Reusable agent components & LangChain \\ \bottomrule
     \textbf{Key Concept:} Every production failure, once annotated, becomes a regression test. The system gets smarter with every error.
 \end{frame}
 
-% SLIDE 35
+% SLIDE 
 \begin{frame}{Creating a "Golden Dataset"}
     Evaluation is impossible without a benchmark.
     
@@ -789,7 +814,7 @@ Reusable agent components & LangChain \\ \bottomrule
     \end{enumerate}
 \end{frame}
 
-% SLIDE 36
+% SLIDE 
 \begin{frame}{Deployment Strategies (Ops)}
     \textbf{Shadow Mode:}
     Run the new agent alongside the old one. User sees Old, you log New. Compare outputs offline.
@@ -801,7 +826,7 @@ Reusable agent components & LangChain \\ \bottomrule
     For high-stakes tools (e.g., \texttt{transfer\_money}), the agent pauses and asks a human for approval via a UI before executing the tool.
 \end{frame}
 
-% SLIDE 37
+% SLIDE 
 \begin{frame}{Future Trends}
     \begin{itemize}
         \item \textbf{Standardized Interfaces:} The "Agent Protocol" (standardizing how agents talk to tools).
@@ -811,7 +836,7 @@ Reusable agent components & LangChain \\ \bottomrule
     \end{itemize}
 \end{frame}
 
-% SLIDE 38
+% SLIDE 
 \begin{frame}{Conclusion \& Key Takeaways}
     \begin{enumerate}
         \item \textbf{Architecture:} Design for decomposition. Don't build God Agents. Use State Machines for reliability.
@@ -822,28 +847,43 @@ Reusable agent components & LangChain \\ \bottomrule
 
 \end{frame}
 
-% SLIDE 39: REFERENCES 
+% SLIDE : REFERENCES 
 \begin{frame}[allowframebreaks]{References}
 \footnotesize
+
 \begin{thebibliography}{99}
-
-\bibitem{first}
-Author(s). \emph{Title}. Venue/Publisher, Year.
-
-\bibitem{second}
-Author(s). \emph{Title}. Venue/Publisher, Year.
+\beamertemplatebookbibitems
 
 \bibitem{langchain}
-Author(s). \emph{Title}. Year. \texttt{https://...}
+LangChain.
+\newblock \emph{LangChain Documentation}.
+\newblock \url{https://python.langchain.com/}
 
-% more \bibitem entries to be added for each referred paper
+\bibitem{langgraph}
+LangGraph.
+\newblock \emph{LangGraph Documentation}.
+\newblock \url{https://langchain-ai.github.io/langgraph/}
+
+\bibitem{mcp_spec}
+Model Context Protocol.
+\newblock \emph{MCP Specification (v2025-06-18)}.
+\newblock \url{https://modelcontextprotocol.io/specification/2025-06-18}
+
+\bibitem{a2a_announce}
+Google Developers Blog.
+\newblock \emph{Announcing the Agent2Agent Protocol (A2A)} (Apr 2025).
+\newblock \url{https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/}
+
+\bibitem{li2025a2a_mcp}
+Q. Li and Y. Xie.
+\newblock \emph{From Glue-Code to Protocols: A Critical Analysis of A2A and MCP Integration for Scalable Agent Systems}.
+\newblock arXiv:2505.03864, 2025. \url{https://arxiv.org/abs/2505.03864}
 
 \end{thebibliography}
 \end{frame}
 
 
-
-% SLIDE 40
+% SLIDE 
 \begin{frame}{Acknowledgements}
 \centering
       We would like to thank student Martina Speciale\\ for her contribution to improving this tutorial.
