@@ -440,7 +440,7 @@
             \end{itemize}
         \item \textbf{Circuit Breakers:}
             \begin{itemize}
-                \item Stop execution if cost > \$X or loops > 10.
+                \item Stop execution if cost $\ge X$ or loops $\ge 10$.
             \end{itemize}
     \end{enumerate}
     
@@ -453,7 +453,7 @@
 
 % SLIDE 19
 \begin{frame}{Observability: Seeing Inside the Agent's Mind}
-    \textit{Reference: Agent Quality Whitepaper, Chapter 3}
+    \textit{Reference: Agent Quality Whitepaper~\cite{google_agent_quality} (Ch.~3)}
     
     \textbf{The "Kitchen Analogy"}
     \begin{itemize}
@@ -526,8 +526,8 @@
 
 % SLIDE 23
 \begin{frame}{Evaluation: The Outside-In Framework}
-    \textit{Reference: Agent Quality Whitepaper, Chapter 2}
-    
+    \textit{Reference: Agent Quality Whitepaper~\cite{google_agent_quality} (Ch.~2)}
+
     Traditional QA (Unit Tests) verifies logic. AI Evaluation validates \textbf{Intent}.
     
     \textbf{The 4 Pillars of Agent Quality:}
@@ -776,11 +776,9 @@ class State(TypedDict):
     n: int
 
 def step(state: State) -> State:
-    # update explicit state
     return {"n": state["n"] + 1}
 
 def route(state: State) -> str:
-    # explicit stop condition
     return END if state["n"] >= 3 else "step"
 
 g = StateGraph(State)
@@ -957,7 +955,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
 
 % SLIDE 41
 \begin{frame}{The Agent Quality Flywheel}
-    \textit{Reference: Agent Quality Whitepaper, Chapter 4}
+    \textit{Reference: Agent Quality Whitepaper~\cite{google_agent_quality} (Ch.~4)}
     
     Continuous Improvement Loop:
     
