@@ -826,6 +826,36 @@ MCP turns integrations into \textbf{discoverable, structured interfaces} rather 
 \end{block}
 \end{frame}
 
+% SLIDE 37 — MCP vs A2A vs Frameworks
+\begin{frame}{MCP vs A2A vs Frameworks: Who Does What?}
+\small
+
+\begin{table}[]
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Aspect} & \textbf{LangChain} & \textbf{LangGraph} & \textbf{MCP / A2A} \\ \midrule
+Abstraction level & Library & Orchestration & Protocol \\
+Scope & In-process & In-process & Cross-process \\
+State sharing & Shared memory & Explicit state & No shared state \\
+Coupling & Tight & Medium & Loose \\
+Scale boundary & Single app & Single runtime & Org / network \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.25cm}
+\textbf{Interpretation:}
+\begin{itemize}
+    \item LangChain/LangGraph help you \textbf{build agents}.
+    \item MCP/A2A help agents \textbf{interoperate across systems}.
+\end{itemize}
+
+\vspace{0.2cm}
+\begin{block}{Key insight}
+Frameworks solve \textbf{engineering productivity}.  
+Protocols solve \textbf{system scalability and governance}. \cite{li2025a2a_mcp}
+\end{block}
+\end{frame}
+
 
 % SLIDE 
 \begin{frame}{The Agent Quality Flywheel}
