@@ -1,5 +1,9 @@
 \documentclass[9pt]{beamer}
 
+\usepackage[backend=bibtex,style=numeric]{biblatex}
+\addbibresource{references.bib}
+
+
 % --- Theme and Packages ---
 \usetheme{Madrid}
 \usecolortheme{beaver}
@@ -705,7 +709,14 @@
 
 \end{frame}
 
-% SLIDE 35
+% SLIDE 35: REFERENCES
+\begin{frame}[allowframebreaks]{References}
+    \printbibliography
+\end{frame}
+
+
+
+% SLIDE 36
 \begin{frame}{33. Acknowledgements}
 \centering
       We would like to thank student Martina Speciale\\ for her contribution to improving this tutorial.
