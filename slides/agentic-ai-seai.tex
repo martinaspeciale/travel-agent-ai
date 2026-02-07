@@ -801,20 +801,26 @@ Trajectory-level evaluation is therefore essential.
 
 % SLIDE 36
 \begin{frame}{Human-in-the-Loop (HITL) Evaluation}
-    Humans are the arbiter of "Ground Truth".
-    
-    \textbf{When to use HITL:}
-    \begin{itemize}
-        \item \textbf{Golden Set Creation:} Humans curate the "perfect" trajectories for regression testing.
-        \item \textbf{Ambiguity:} Subjective tone/brand alignment.
-        \item \textbf{Safety Violations:} Confirming true positives on red-teaming.
-    \end{itemize}
-    
-    \textbf{The Feedback UI:}
-    \begin{itemize}
-        \item Must show the user not just the chat, but the \textbf{Thinking Process} (e.g., collapsible "Thought" bubbles).
-        \item Feedback mechanism: Thumbs up/down + "Edit the correct response".
-    \end{itemize}
+Humans remain the arbiter of \textbf{ground truth} in agentic systems.
+
+\textbf{When to use HITL:}
+\begin{itemize}
+    \item \textbf{Golden set creation:}
+    Humans curate correct trajectories for regression testing.
+    \item \textbf{Ambiguity:}
+    Subjective judgments (tone, style, brand alignment).
+    \item \textbf{Safety violations:}
+    Confirming true positives during red-teaming.
+\end{itemize}
+
+\textbf{The Feedback Interface:}
+\begin{itemize}
+    \item Must expose \textbf{structured execution traces}
+    (plans, actions, tool calls, retrieved evidence),
+    not raw chain-of-thought.
+    \item Allow corrective feedback:
+    thumbs up/down, annotations, or edited target responses.
+\end{itemize}
 \end{frame}
 
 % SLIDE 37
