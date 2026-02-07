@@ -181,7 +181,7 @@ but only an observation $o_t$ correlated with it.
 
 \textbf{Consequence:}
 Decision-making must explicitly handle \textbf{state uncertainty}.
-\textit{Key difference from MDP:} optimal actions depend on history via the belief.
+\textit{Key difference from MDP:} optimal actions depend on history via the belief. 
 \end{frame}
 
 % SLIDE 7
@@ -199,6 +199,12 @@ for reasoning about \textbf{sequential decisions under partial observability}.
 \end{block}
 \textbf{Bridge:} In deployed agents, the "belief state" is implemented approximately
 via context + summaries + external memory (RAG/DB), not explicit Bayes filtering.
+
+\textbf{Scope clarification:}
+We use POMDPs as a \textbf{descriptive framework} for reasoning about
+state, uncertainty, and trajectories, \textbf{not} as a reinforcement
+learning or policy optimization method.
+
 
 \begin{alertblock}{Practical payoff}
 Many production failures are best explained as:
