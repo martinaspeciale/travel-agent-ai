@@ -181,10 +181,11 @@ but only an observation $o_t$ correlated with it.
 
 \textbf{Consequence:}
 Decision-making must explicitly handle \textbf{state uncertainty}.
+\textit{Key difference from MDP:} optimal actions depend on history via the belief.
 \end{frame}
 
 % SLIDE 7
-\begin{frame}{Why POMDPs for Agentic AI?}
+\begin{frame}{Why POMDPs for Agentic AI? \cite{kaelbling1998}}
 We introduce POMDPs because they provide a \textbf{canonical language}
 for reasoning about \textbf{sequential decisions under partial observability}.
 
@@ -196,6 +197,8 @@ for reasoning about \textbf{sequential decisions under partial observability}.
     \item The agent chooses \textbf{actions} with side effects (tool calls), incurring cost and risk.
 \end{itemize}
 \end{block}
+\textbf{Bridge:} In deployed agents, the "belief state" is implemented approximately
+via context + summaries + external memory (RAG/DB), not explicit Bayes filtering.
 
 \begin{alertblock}{Practical payoff}
 Many production failures are best explained as:
@@ -670,7 +673,7 @@ This reframes retrieval quality as \textbf{perception accuracy}.
 % SLIDE 29
 \begin{frame}{Pillar 2: Tracing (The Narrative)}
     Tracing connects individual logs into a causal chain (Trajectory).
-    \textit{Standard: OpenTelemetry (OTEL)}
+    \textit{Standard: OpenTelemetry (OTel)}
     
     \textbf{Components of a Trace:}
     \begin{itemize}
