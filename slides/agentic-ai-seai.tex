@@ -1,4 +1,9 @@
+% --- GitHub reference --- 
+% https://github.com/martinaspeciale/travel-agent-ai/tree/main/slides 
+% * README.md contains info about the additions and extension of the original work
+
 \documentclass[9pt]{beamer}
+
 
 % --- Theme and Packages ---
 \usetheme{Madrid}
@@ -10,6 +15,7 @@
 \usepackage{amsmath}
 \usepackage{ragged2e}
 \usepackage{url}
+\usepackage[superscript]{cite}
 
 % --- Custom Definitions ---
 \definecolor{googleblue}{RGB}{66, 133, 244}
@@ -38,8 +44,6 @@
     tabsize=2,
     columns=fullflexible
 }
-
-
 
 % --- Title ---
 \title[Agentic AI: Arch to Ops]{Agentic AI: From Architecture to Orchestration and Quality}
@@ -898,6 +902,9 @@ In agentic workflows, hallucinations can trigger \textbf{real actions}, not just
 Add \textbf{uncertainty gating}: if uncertainty is high, require retrieval, verification, or human approval.
 Semantic-entropy methods estimate uncertainty at the level of \textit{meaning} (not surface forms). \cite{semantic_entropy_2024}
 \end{block}
+
+LLMs lack explicit epistemic uncertainty, agentic systems must therefore compensate at the architectural level.
+
 \end{frame}
 
 
@@ -1281,7 +1288,7 @@ S. Yao, Y. Zhou, D. Yang, et al.
 \bibitem{zhang2025landscapeagenticreinforcementlearning}
 Guibin Zhang, Hejia Geng, Xiaohang Yu, Zhenfei Yin, Zaibin Zhang, Zelin Tan, Heng Zhou, Zhongzhi Li, Xiangyuan Xue, Yijiang Li, Yifan Zhou, Yang Chen, Chen Zhang, Yutao Fan, Zihu Wang, Songtao Huang, Yue Liao, Hongru Wang, Mengyue Yang, Heng Ji, Michael Littman, Jun Wang, Shuicheng Yan, and Lei Bai.
 \newblock \emph{The Landscape of Agentic Reinforcement Learning for LLMs: A Survey}.
-\newblock arXiv preprint arXiv:2509.02547, 2025. \url{https://arxiv.org/abs/2509.02547}  :contentReference[oaicite:0]{index=0}
+\newblock arXiv preprint arXiv:2509.02547, 2025. \url{https://arxiv.org/abs/2509.02547} 
 
 
 \bibitem{google_agent_quality}
