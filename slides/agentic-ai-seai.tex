@@ -464,6 +464,15 @@ In POMDPs, observations are noisy and incomplete.
 \end{itemize}
 \end{block}
 
+\textbf{Note: Multiple Observation Channels}
+\begin{itemize}
+    \item RAG pipelines (vector search, hybrid retrieval)
+    \item Web search tools (e.g., Tavily, SerpAPI)
+    \item Tool and API outputs (databases, filesystems, code execution)
+    \item Direct environment feedback (errors, confirmations, side effects)
+\end{itemize}
+
+
 \textbf{Failure interpretation:}
 \begin{itemize}
     \item Hallucination $\neq$ reasoning error
@@ -1208,7 +1217,7 @@ Adopt MCP/A2A only when agents outgrow a single runtime. \cite{li2025a2a_mcp}
             \begin{itemize}
                 \item \textit{Input:} User Prompt.
                 \item \textit{Expected Output:} The correct answer.
-                \item \textit{Expected Tools:} Which tools *must* be called.
+                \item \textit{Expected Tools:} Which tools \textbf{must} be called.
             \end{itemize}
         \item \textbf{Maintenance:} Golden sets rot. Update them as the agent's capabilities evolve.
     \end{enumerate}
