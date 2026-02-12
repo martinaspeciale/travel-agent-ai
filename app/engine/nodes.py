@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import unicodedata
 from datetime import datetime
 from colorama import Fore, Style, init
 from langchain_core.messages import HumanMessage
@@ -55,6 +56,12 @@ def _parse_flexible_date(raw_text: str):
             except ValueError:
                 return None
     return None
+
+
+def _norm_text(value: str) -> str:
+    text = (value or "").strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
 
 # --- 1. INIT NODE ---
 def init_node(state: TravelAgentState):
@@ -436,9 +443,9 @@ def places_finder_node(state: TravelAgentState):
     def _address_matches_destination(address: str, destination: str) -> bool:
         if not address or not destination:
             return False
-        address_l = address.lower()
-        dest_l = destination.lower()
-        if dest_l in address_l:
+        address_n = _norm_text(address)
+        dest_n = _norm_text(destination)
+        if dest_n in address_n:
             return True
         aliases = {
             "milano": "milan",
@@ -446,10 +453,26 @@ def places_finder_node(state: TravelAgentState):
             "firenze": "florence",
             "venezia": "venice",
             "napoli": "naples",
-            "torino": "turin"
+            "torino": "turin",
+            "barcellona": "barcelona",
+            "parigi": "paris",
+            "monaco": "munich",
+            "praga": "prague",
+            "londra": "london",
+            "vienna": "wien",
+            "new york": "new york city",
         }
-        alt = aliases.get(dest_l)
-        return alt in address_l if alt else False
+        alternatives = {dest_n}
+        alt = aliases.get(dest_n)
+        if alt:
+            alternatives.add(_norm_text(alt))
+
+        # Support reverse alias (e.g. destination already in english)
+        for k, v in aliases.items():
+            if _norm_text(v) == dest_n:
+                alternatives.add(_norm_text(k))
+
+        return any(token in address_n for token in alternatives if token)
 
     if daily_budget < 70:
         logger.log_event("FINDER", "WARNING", f"Budget critico rilevato: {daily_budget}€/giorno.")
@@ -524,8 +547,6 @@ def confidence_evaluator_node(state: TravelAgentState):
         confidence = 0.0
         reasons.append("Itinerario vuoto")
     else:
-        confidence = 0.8
-
         unverified = 0
         total_places = 0
 
@@ -536,17 +557,20 @@ def confidence_evaluator_node(state: TravelAgentState):
                     unverified += 1
 
         if total_places > 0:
-            unverified_ratio = unverified / total_places
-            confidence -= 0.4 * unverified_ratio
+            verified = total_places - unverified
+            verified_ratio = verified / total_places
+            confidence = verified_ratio
+            reasons.append(f"Verificati {verified}/{total_places} luoghi")
             if unverified > 0:
-                reasons.append(f"{unverified}/{total_places} luoghi non verificati")
+                reasons.append(f"Non verificati {unverified}/{total_places}")
+        else:
+            confidence = 0.0
 
         budget_total = state.get("budget_total")
         total_budget = extract_budget_number(str(budget_total)) if budget_total else extract_budget_number(state.get("budget", ""))
         num_days = int(state['days']) if state['days'].isdigit() else 1
         daily_budget = total_budget / num_days
         if daily_budget < 60:
-            confidence -= 0.1
             reasons.append(f"Budget giornaliero basso ({round(daily_budget, 2)}€)")
 
     confidence = max(0.0, min(1.0, round(confidence, 2)))
