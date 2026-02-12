@@ -125,7 +125,8 @@ Trace ID: {self.trace_id}
             "ROUTER": Fore.GREEN, "PLANNER": Fore.CYAN, 
             "FINDER": Style.BRIGHT + Fore.GREEN, "CRITIC": Fore.YELLOW, 
             "PUBLISHER": Fore.GREEN, "ERROR": Fore.RED, "INIT": Style.DIM + Fore.GREEN,
-            "TAVILY": Fore.MAGENTA, "TAVILY_FLIGHTS": Style.BRIGHT + Fore.MAGENTA
+            "TAVILY": Fore.MAGENTA, "TAVILY_FLIGHTS": Style.BRIGHT + Fore.MAGENTA,
+            "SERPAPI_FLIGHTS": Style.BRIGHT + Fore.CYAN
         }
         color = colors.get(node_name, Fore.GREEN)
         
@@ -153,7 +154,12 @@ Trace ID: {self.trace_id}
         latency = self._calculate_latency()
         timestamp = datetime.now().strftime("%H:%M:%S")
         tool_name_upper = (tool_name or "").upper()
-        color = Fore.MAGENTA if "TAVILY" in tool_name_upper else Fore.BLUE
+        if "TAVILY" in tool_name_upper:
+            color = Fore.MAGENTA
+        elif "SERPAPI" in tool_name_upper:
+            color = Fore.CYAN
+        else:
+            color = Fore.BLUE
         
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
         tab_pad = self._pad_after_prefix(prefix)

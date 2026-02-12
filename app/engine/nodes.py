@@ -1,6 +1,7 @@
 import os
 import json
 import re
+from datetime import datetime
 from colorama import Fore, Style, init
 from langchain_core.messages import HumanMessage
 from app.core.state import TravelAgentState
@@ -21,13 +22,27 @@ def init_node(state: TravelAgentState):
     print(Fore.CYAN + "\n::: TRAVEL AGENT AI 2.0 - ARCHITECT EDITION :::\n")
     
     dest = input(f"{Fore.GREEN}>> Dove vuoi andare? {Style.RESET_ALL}").strip()
-    days = input(f"{Fore.GREEN}>> Quanti giorni? {Style.RESET_ALL}").strip()
     interests = input(f"{Fore.GREEN}>> Interessi? {Style.RESET_ALL}").strip()
     budget_total = input(f"{Fore.GREEN}>> Budget totale indicativo (€)? {Style.RESET_ALL}").strip()
     companion = input(f"{Fore.GREEN}>> Con chi viaggi? (Solo/Coppia/Famiglia) {Style.RESET_ALL}").strip() or "Solo"
     origin = input(f"{Fore.GREEN}>> Partenza volo (citta, opzionale)? {Style.RESET_ALL}").strip()
     depart_date = input(f"{Fore.GREEN}>> Data andata (YYYY-MM-DD, opzionale)? {Style.RESET_ALL}").strip()
     return_date = input(f"{Fore.GREEN}>> Data ritorno (YYYY-MM-DD, opzionale)? {Style.RESET_ALL}").strip()
+
+    days = ""
+    if depart_date and return_date:
+        try:
+            d1 = datetime.strptime(depart_date, "%Y-%m-%d").date()
+            d2 = datetime.strptime(return_date, "%Y-%m-%d").date()
+            delta = (d2 - d1).days + 1
+            if delta > 0:
+                days = str(delta)
+                logger.log_event("INIT", "INFO", f"Giorni calcolati automaticamente dalle date: {days}")
+        except ValueError:
+            pass
+
+    if not days:
+        days = input(f"{Fore.GREEN}>> Quanti giorni? {Style.RESET_ALL}").strip()
     
     logger.info(f"Input: {dest}, {days}gg, {budget_total or 'N/D'}€, {companion}")
 
@@ -78,6 +93,13 @@ def flight_search_node(state: TravelAgentState):
                 except ValueError:
                     return None
         return None
+
+    def _extract_time_value(*chunks):
+        text = " ".join([(c or "") for c in chunks])
+        match = re.search(r"\b([01]?\d|2[0-3]):[0-5]\d\b", text)
+        if match:
+            return match.group(0)
+        return "n/d"
 
     origin = (state.get("origin") or "").strip()
     destination = (state.get("destination") or "").strip()
@@ -133,8 +155,15 @@ def flight_search_node(state: TravelAgentState):
         for row in rows:
             title = row.get("title", "")
             content = row.get("content", "")
+            raw_content = row.get("raw_content", "")
             price_value = _extract_price_value(title, content)
-            enriched_rows.append({**row, "price_value": price_value})
+            depart_time = _extract_time_value(title, content, raw_content)
+            enriched_rows.append({
+                **row,
+                "price_value": price_value,
+                "depart_date": current_depart_date or "n/d",
+                "depart_time": depart_time,
+            })
 
         sorted_rows = sorted(
             enriched_rows,
@@ -152,6 +181,8 @@ def flight_search_node(state: TravelAgentState):
         )
         print("\nProposta volo piu' economica trovata:")
         print(f"- {best.get('title', 'N/D')}")
+        print(f"- Data partenza: {best.get('depart_date', 'n/d')}")
+        print(f"- Orario partenza: {best.get('depart_time', 'n/d')}")
         if best.get("url"):
             print(f"- Link: {best.get('url')}")
         choice = input(
@@ -159,9 +190,24 @@ def flight_search_node(state: TravelAgentState):
         ).strip().lower()
 
         if choice == "s":
+            selected = {
+                "title": best.get("title", "N/D"),
+                "url": best.get("url", ""),
+                "source": best.get("source", "serpapi"),
+                "price_value": best.get("price_value"),
+                "depart_date": best.get("depart_date", current_depart_date or "n/d"),
+                "depart_time": best.get("depart_time", "n/d"),
+                "origin": origin,
+                "destination": destination,
+                "return_date": return_date or None,
+            }
             return {
-                "flight_options": sorted_rows,
-                "flight_summary": f"Best option confirmed: {best.get('title', 'N/D')}",
+                "flight_options": [selected],
+                "flight_summary": (
+                    f"Best option confirmed: {selected.get('title', 'N/D')} "
+                    f"(date: {selected.get('depart_date', 'n/d')}, "
+                    f"time: {selected.get('depart_time', 'n/d')})"
+                ),
                 "flight_confidence_score": 0.8 if best.get("price_value") is not None else 0.5,
                 "depart_date": current_depart_date or None,
             }
@@ -174,7 +220,7 @@ def flight_search_node(state: TravelAgentState):
 
         # skip o input non riconosciuto => prosegui senza bloccare il flusso
         return {
-            "flight_options": sorted_rows,
+            "flight_options": [],
             "flight_summary": "Flight suggestions collected but not confirmed by user.",
             "flight_confidence_score": 0.4,
             "depart_date": current_depart_date or None,

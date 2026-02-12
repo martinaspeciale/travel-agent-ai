@@ -15,12 +15,16 @@ class DayPlan(TypedDict):
 
 # Opzione volo suggerita
 class FlightOption(TypedDict, total=False):
+    title: str
+    url: str
     origin: str
     destination: str
     depart_date: str
+    depart_time: str
     return_date: Optional[str]
     airline: str
     price: str
+    price_value: Optional[float]
     duration: str
     stops: str
     source: str

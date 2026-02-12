@@ -68,6 +68,30 @@ def _add_docx_hyperlink(paragraph, text, url):
     paragraph._p.append(hyperlink)
     return hyperlink
 
+
+def _top_flight_options(state, max_items=3):
+    options = state.get("flight_options") or []
+    if not isinstance(options, list):
+        return []
+    return options[:max_items]
+
+
+def _selected_flight(state):
+    options = _top_flight_options(state, max_items=1)
+    if not options:
+        return None
+    return options[0]
+
+
+def _format_flight_price(option):
+    value = option.get("price_value")
+    if value is None:
+        return "n/d"
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return "n/d"
+
 def print_terminal_report(state):
     if not state.get('itinerary') and not state.get('is_approved'):
         print("\n" + "!"*60)
@@ -79,6 +103,23 @@ def print_terminal_report(state):
     print("\n" + "="*60)
     print(f" >>> ITINERARIO FINALE: {state.get('destination', 'Viaggio').upper()}")
     print("="*60)
+
+    flight_summary = state.get("flight_summary")
+    selected = _selected_flight(state)
+    if flight_summary or selected:
+        print("\n [FLIGHT]")
+        if flight_summary:
+            print(f"   {flight_summary}")
+        if selected:
+            title = selected.get("title", "N/D")
+            url = selected.get("url", "")
+            price = _format_flight_price(selected)
+            dep_date = selected.get("depart_date", "n/d")
+            dep_time = selected.get("depart_time", "n/d")
+            print(f"   1. {title} | prezzo stimato: {price}")
+            print(f"      data: {dep_date} | orario: {dep_time}")
+            if url:
+                print(f"      {url}")
     
     itinerary = state.get('itinerary', [])
     for day in itinerary:
@@ -117,6 +158,7 @@ def generate_html_report(state):
             body {{ font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f0f2f5; color: #333; }}
             h1 {{ color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }}
             .day-card {{ background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+            .flight-card {{ background: #eef6ff; padding: 16px; margin-bottom: 20px; border-radius: 10px; border-left: 6px solid #3498db; }}
             h2 {{ color: #e67e22; }}
             .place {{ margin-top: 15px; padding: 10px; background: #f9f9f9; border-left: 5px solid #3498db; border-radius: 4px; }}
             .place-name {{ font-size: 1.1em; font-weight: bold; }}
@@ -129,6 +171,29 @@ def generate_html_report(state):
     <body>
         <h1>✈️ Itinerario: {dest.upper()}</h1>
     """
+
+    flight_summary = state.get("flight_summary")
+    selected = _selected_flight(state)
+    if flight_summary or selected:
+        html += "<div class='flight-card'><h2>Volo suggerito</h2>"
+        if flight_summary:
+            html += f"<p>{flight_summary}</p>"
+        if selected:
+            html += "<ul>"
+            title = selected.get("title", "N/D")
+            url = selected.get("url", "")
+            price = _format_flight_price(selected)
+            dep_date = selected.get("depart_date", "n/d")
+            dep_time = selected.get("depart_time", "n/d")
+            if url:
+                html += (
+                    f"<li>{title} | prezzo stimato: {price} | data: {dep_date} | orario: {dep_time} "
+                    f"- <a href='{url}' target='_blank'>Link</a></li>"
+                )
+            else:
+                html += f"<li>{title} | prezzo stimato: {price} | data: {dep_date} | orario: {dep_time}</li>"
+            html += "</ul>"
+        html += "</div>"
     
     for day in state.get('itinerary', []):
         html += f"<div class='day-card'><h2>Giorno {day['day_number']}: {day['focus']}</h2>"
@@ -170,6 +235,25 @@ def generate_docx_report(state):
     title.alignment = 1 # Center
 
     doc.add_paragraph(f"Ecco il tuo piano di viaggio generato dall'AI per {destination}.")
+
+    flight_summary = state.get("flight_summary")
+    selected = _selected_flight(state)
+    if flight_summary or selected:
+        doc.add_heading("Volo suggerito", level=1)
+        if flight_summary:
+            doc.add_paragraph(flight_summary)
+        if selected:
+            title_text = selected.get("title", "N/D")
+            price = _format_flight_price(selected)
+            url = selected.get("url", "")
+            dep_date = selected.get("depart_date", "n/d")
+            dep_time = selected.get("depart_time", "n/d")
+            doc.add_paragraph(
+                f"1. {title_text} | prezzo stimato: {price} | data: {dep_date} | orario: {dep_time}"
+            )
+            if url:
+                p_link = doc.add_paragraph(style='List Bullet')
+                _add_docx_hyperlink(p_link, "Apri offerta volo", url)
 
     for day in state.get('itinerary', []):
         # Intestazione Giorno
