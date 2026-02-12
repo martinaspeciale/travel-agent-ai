@@ -1,6 +1,8 @@
 import os
 import json
 import re
+import unicodedata
+from datetime import datetime
 from colorama import Fore, Style, init
 from langchain_core.messages import HumanMessage
 from app.core.state import TravelAgentState
@@ -10,9 +12,56 @@ from app.core.logger import logger
 from app.core.utils import safe_json_parse
 from app.engine import prompts
 from app.core.utils import extract_budget_number
-from app.tools.search import search_prices_tool
+from app.tools.search import search_flights_tool
 
 init(autoreset=True)
+
+
+def _parse_flexible_date(raw_text: str):
+    text = (raw_text or "").strip()
+    if not text:
+        return None
+
+    try:
+        return datetime.strptime(text, "%Y-%m-%d").date()
+    except ValueError:
+        pass
+
+    month_map = {
+        "gennaio": 1, "january": 1,
+        "febbraio": 2, "february": 2,
+        "marzo": 3, "march": 3,
+        "aprile": 4, "april": 4,
+        "maggio": 5, "may": 5,
+        "giugno": 6, "june": 6,
+        "luglio": 7, "july": 7,
+        "agosto": 8, "august": 8,
+        "settembre": 9, "september": 9,
+        "ottobre": 10, "october": 10,
+        "novembre": 11, "november": 11,
+        "dicembre": 12, "december": 12,
+    }
+    m = re.match(r"^\s*(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\s*$", text, flags=re.IGNORECASE)
+    if m:
+        day = int(m.group(1))
+        month_key = m.group(2).strip().lower()
+        month = month_map.get(month_key)
+        if month:
+            year = datetime.today().year
+            try:
+                parsed = datetime(year, month, day).date()
+                if parsed < datetime.today().date():
+                    parsed = datetime(year + 1, month, day).date()
+                return parsed
+            except ValueError:
+                return None
+    return None
+
+
+def _norm_text(value: str) -> str:
+    text = (value or "").strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
 
 # --- 1. INIT NODE ---
 def init_node(state: TravelAgentState):
@@ -21,10 +70,33 @@ def init_node(state: TravelAgentState):
     print(Fore.CYAN + "\n::: TRAVEL AGENT AI 2.0 - ARCHITECT EDITION :::\n")
     
     dest = input(f"{Fore.GREEN}>> Dove vuoi andare? {Style.RESET_ALL}").strip()
-    days = input(f"{Fore.GREEN}>> Quanti giorni? {Style.RESET_ALL}").strip()
     interests = input(f"{Fore.GREEN}>> Interessi? {Style.RESET_ALL}").strip()
     budget_total = input(f"{Fore.GREEN}>> Budget totale indicativo (€)? {Style.RESET_ALL}").strip()
     companion = input(f"{Fore.GREEN}>> Con chi viaggi? (Solo/Coppia/Famiglia) {Style.RESET_ALL}").strip() or "Solo"
+    origin = input(f"{Fore.GREEN}>> Partenza volo (citta, opzionale)? {Style.RESET_ALL}").strip()
+    depart_date = input(f"{Fore.GREEN}>> Data andata (YYYY-MM-DD, obbligatoria)? {Style.RESET_ALL}").strip()
+    while not depart_date:
+        logger.log_event("INIT", "WARNING", "Data andata mancante: richiesta obbligatoria.")
+        depart_date = input(f"{Fore.GREEN}>> Inserisci la data andata (YYYY-MM-DD): {Style.RESET_ALL}").strip()
+    return_date = input(f"{Fore.GREEN}>> Data ritorno (YYYY-MM-DD, opzionale)? {Style.RESET_ALL}").strip()
+
+    days = ""
+    if depart_date and return_date:
+        d1 = _parse_flexible_date(depart_date)
+        d2 = _parse_flexible_date(return_date)
+        if d1 and d2:
+            delta = (d2 - d1).days + 1
+            if delta > 0:
+                days = str(delta)
+                logger.log_event("INIT", "INFO", f"Giorni calcolati automaticamente dalle date: {days}")
+
+    if not days:
+        days = "3"
+        logger.log_event(
+            "INIT",
+            "WARNING",
+            "Date non sufficienti/valide per calcolare i giorni: uso fallback 3 giorni."
+        )
     
     logger.info(f"Input: {dest}, {days}gg, {budget_total or 'N/D'}€, {companion}")
 
@@ -38,6 +110,9 @@ def init_node(state: TravelAgentState):
         "budget": f"{budget_total}€" if budget_total else "",
         "budget_total": budget_total or None,
         "companion": companion,
+        "origin": origin or None,
+        "depart_date": depart_date or None,
+        "return_date": return_date or None,
         "retry_count": 0,
         "is_approved": False,
         "itinerary": [],
@@ -53,9 +128,224 @@ def travel_router_node(state: TravelAgentState):
     logger.log_event("ROUTER", "THOUGHT", data.get("reasoning", "N/A"))
     return {"travel_style": data.get("style", "RELAX")}
 
+
+# --- 2b. FLIGHT SEARCH NODE (minimal wiring) ---
+def flight_search_node(state: TravelAgentState):
+    def _extract_price_value(*chunks):
+        text = " ".join([(c or "") for c in chunks])
+        patterns = [
+            r"€\s*([0-9]+(?:[.,][0-9]{1,2})?)",
+            r"([0-9]+(?:[.,][0-9]{1,2})?)\s*€",
+            r"\$\s*([0-9]+(?:[.,][0-9]{1,2})?)",
+            r"\bPrice\s*([0-9]+(?:[.,][0-9]{1,2})?)\b",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if match:
+                value = match.group(1).replace(",", ".")
+                try:
+                    return float(value)
+                except ValueError:
+                    return None
+        return None
+
+    def _extract_time_value(*chunks):
+        text = " ".join([(c or "") for c in chunks])
+        match = re.search(r"\b([01]?\d|2[0-3]):[0-5]\d\b", text)
+        if match:
+            return match.group(0)
+        return "n/d"
+
+    def _enrich_rows(rows, date_value):
+        enriched = []
+        for row in rows:
+            title = row.get("title", "")
+            content = row.get("content", "")
+            raw_content = row.get("raw_content", "")
+            price_value = row.get("price_value")
+            if price_value is None:
+                price_value = _extract_price_value(title, content, raw_content)
+            depart_time = _extract_time_value(title, content, raw_content)
+            enriched.append({
+                **row,
+                "price_value": price_value,
+                "depart_date": date_value or "n/d",
+                "depart_time": depart_time,
+            })
+        return sorted(
+            enriched,
+            key=lambda r: r["price_value"] if r.get("price_value") is not None else float("inf")
+        )
+
+    origin = (state.get("origin") or "").strip()
+    destination = (state.get("destination") or "").strip()
+    depart_date = (state.get("depart_date") or "").strip()
+    return_date = (state.get("return_date") or "").strip()
+
+    # Keep this step non-blocking: if key flight inputs are missing, continue normally.
+    if not origin or not destination:
+        logger.log_event("FLIGHTS", "SKIP", "Origin or destination missing, skipping flight search.")
+        return {
+            "flight_options": [],
+            "flight_summary": "Flight search skipped: missing origin or destination.",
+            "flight_confidence_score": 0.0,
+        }
+
+    current_depart_date = depart_date
+    max_attempts = 3
+    attempts = 0
+
+    while attempts < max_attempts:
+        attempts += 1
+        logger.log_event(
+            "FLIGHTS",
+            "START",
+            f"Search flights {origin} -> {destination} (depart: {current_depart_date or 'N/D'})"
+        )
+
+        rows = search_flights_tool(
+            origin=origin,
+            destination=destination,
+            depart_date=current_depart_date,
+            return_date=return_date,
+        )
+
+        if not rows:
+            logger.log_event("FLIGHTS", "WARNING", "Nessuna opzione volo trovata.")
+            change = input(
+                Fore.WHITE + "Nessun volo trovato. Vuoi cambiare data andata? (s/n): "
+            ).strip().lower()
+            if change == "s":
+                new_date = input("Nuova data andata (YYYY-MM-DD): ").strip()
+                while not new_date:
+                    logger.log_event("FLIGHTS", "WARNING", "Data andata mancante: richiesta obbligatoria.")
+                    new_date = input("Inserisci la nuova data andata (YYYY-MM-DD): ").strip()
+                current_depart_date = new_date
+                continue
+            return {
+                "flight_options": [],
+                "flight_summary": "No flight options found from configured sources.",
+                "flight_confidence_score": 0.0,
+                "depart_date": current_depart_date or None,
+            }
+
+        sorted_rows = _enrich_rows(rows, current_depart_date)
+        best = sorted_rows[0]
+        best_return = None
+
+        best_price = (
+            f"{best.get('price_value'):.2f}" if best.get("price_value") is not None else "n/d"
+        )
+        logger.log_event(
+            "FLIGHTS",
+            "RESULT",
+            f"Proposta volo: {best.get('title', 'N/D')} | prezzo stimato: {best_price}"
+        )
+        print("\nProposta volo piu' economica trovata:")
+        print(f"- {best.get('title', 'N/D')}")
+        print(f"- Data partenza: {best.get('depart_date', 'n/d')}")
+        print(f"- Orario partenza: {best.get('depart_time', 'n/d')}")
+        if best.get("url"):
+            print(f"- Link: {best.get('url')}")
+
+        if return_date:
+            logger.log_event(
+                "FLIGHTS",
+                "START",
+                f"Search return flight {destination} -> {origin} (depart: {return_date})"
+            )
+            return_rows = search_flights_tool(
+                origin=destination,
+                destination=origin,
+                depart_date=return_date,
+                return_date="",
+            )
+            if return_rows:
+                sorted_return_rows = _enrich_rows(return_rows, return_date)
+                best_return = sorted_return_rows[0]
+                ret_price = (
+                    f"{best_return.get('price_value'):.2f}"
+                    if best_return.get("price_value") is not None else "n/d"
+                )
+                logger.log_event(
+                    "FLIGHTS",
+                    "RESULT",
+                    f"Proposta ritorno: {best_return.get('title', 'N/D')} | prezzo stimato: {ret_price}"
+                )
+                print("\nProposta ritorno trovata:")
+                print(f"- {best_return.get('title', 'N/D')}")
+                print(f"- Data ritorno: {best_return.get('depart_date', 'n/d')}")
+                print(f"- Orario ritorno: {best_return.get('depart_time', 'n/d')}")
+                if best_return.get("url"):
+                    print(f"- Link: {best_return.get('url')}")
+            else:
+                logger.log_event("FLIGHTS", "WARNING", "Nessuna opzione ritorno trovata.")
+                print("\nNessuna opzione ritorno trovata per la data indicata.")
+        choice = input(
+            "Confermi questa/e opzione/i? (s=ok / n=cambia data / skip=continua senza volo): "
+        ).strip().lower()
+
+        if choice == "s":
+            selected = {
+                "title": best.get("title", "N/D"),
+                "url": best.get("url", ""),
+                "source": best.get("source", "serpapi"),
+                "price_value": best.get("price_value"),
+                "depart_date": best.get("depart_date", current_depart_date or "n/d"),
+                "depart_time": best.get("depart_time", "n/d"),
+                "origin": origin,
+                "destination": destination,
+                "return_date": return_date or None,
+                "return_title": best_return.get("title", "n/d") if best_return else "n/d",
+                "return_url": best_return.get("url", "") if best_return else "",
+                "return_price_value": best_return.get("price_value") if best_return else None,
+                "return_depart_date": best_return.get("depart_date", return_date or "n/d") if best_return else (return_date or "n/d"),
+                "return_depart_time": best_return.get("depart_time", "n/d") if best_return else "n/d",
+            }
+            summary = (
+                f"Best option confirmed: {selected.get('title', 'N/D')} "
+                f"(date: {selected.get('depart_date', 'n/d')}, "
+                f"time: {selected.get('depart_time', 'n/d')})"
+            )
+            if return_date:
+                summary += (
+                    f" | Return: {selected.get('return_title', 'n/d')} "
+                    f"(date: {selected.get('return_depart_date', 'n/d')}, "
+                    f"time: {selected.get('return_depart_time', 'n/d')})"
+                )
+            return {
+                "flight_options": [selected],
+                "flight_summary": summary,
+                "flight_confidence_score": 0.8 if best.get("price_value") is not None else 0.5,
+                "depart_date": current_depart_date or None,
+            }
+
+        if choice == "n":
+            new_date = input("Nuova data andata (YYYY-MM-DD): ").strip()
+            while not new_date:
+                logger.log_event("FLIGHTS", "WARNING", "Data andata mancante: richiesta obbligatoria.")
+                new_date = input("Inserisci la nuova data andata (YYYY-MM-DD): ").strip()
+            current_depart_date = new_date
+            continue
+
+        # skip o input non riconosciuto => prosegui senza bloccare il flusso
+        return {
+            "flight_options": [],
+            "flight_summary": "Flight suggestions collected but not confirmed by user.",
+            "flight_confidence_score": 0.4,
+            "depart_date": current_depart_date or None,
+        }
+
+    return {
+        "flight_options": [],
+        "flight_summary": "Flight search stopped after max attempts.",
+        "flight_confidence_score": 0.0,
+        "depart_date": current_depart_date or None,
+    }
+
 # --- 3. PLANNER NODE (RIFATTO) ---
 def trip_planner_node(state: TravelAgentState):
-    logger.log_event("PLANNER", "START", "Pianificazione con Autovalutazione")
+    logger.log_event("PLANNER", "START", "Pianificazione")
     
     if state.get("critic_feedback"):
         # Iniettiamo un comando di "Cambio Rotta"
@@ -105,7 +395,7 @@ def trip_planner_node(state: TravelAgentState):
     # Chiamata LLM
     response = llm.invoke([HumanMessage(content=formatted_prompt)])
     
-    # Parsing del nuovo formato JSON (che ora include confidence_score e itinerary)
+    # Parsing JSON planner output
     data = safe_json_parse(response.content)
     
     # Estrazione sicura dei dati
@@ -130,7 +420,6 @@ def trip_planner_node(state: TravelAgentState):
 
     return {
         "itinerary": itinerary_data, 
-        "confidence_score": state.get("confidence_score", 0.0),
         "is_approved": False,
         "critic_feedback": status_feedback,
         "retry_count": state.get("retry_count", 0) + 1,
@@ -149,38 +438,14 @@ def places_finder_node(state: TravelAgentState):
     num_days = int(state['days']) if state['days'].isdigit() else 1
     daily_budget = total_budget / num_days
 
-    # Contesto budget/costi basato sui luoghi reali dell'itinerario
-    budget_context_lines = []
-    tavily_calls = 0
-    max_tavily_calls = 2
-
-    def _maybe_tavily(query: str):
-        nonlocal tavily_calls
-        if tavily_calls >= max_tavily_calls:
-            return None
-        tavily_calls += 1
-        return search_prices_tool(query)
-
-    def _summarize_cost_info(cost_info: dict) -> str:
-        if not cost_info:
-            return "n/d"
-        summary = cost_info.get("summary", "").strip()
-        if not summary:
-            return "n/d"
-        lines = [line.strip(" -") for line in summary.splitlines() if line.strip()]
-        first = lines[0] if lines else summary
-        first = re.sub(r"\([^)]*https?://[^)]*\)", "", first)
-        first = re.sub(r"https?://\S+", "", first).strip()
-        if len(first) > 140:
-            first = first[:137] + "..."
-        return first if first else "n/d"
+    # Tavily pricing removed: no external cost estimation in finder.
 
     def _address_matches_destination(address: str, destination: str) -> bool:
         if not address or not destination:
             return False
-        address_l = address.lower()
-        dest_l = destination.lower()
-        if dest_l in address_l:
+        address_n = _norm_text(address)
+        dest_n = _norm_text(destination)
+        if dest_n in address_n:
             return True
         aliases = {
             "milano": "milan",
@@ -188,19 +453,29 @@ def places_finder_node(state: TravelAgentState):
             "firenze": "florence",
             "venezia": "venice",
             "napoli": "naples",
-            "torino": "turin"
+            "torino": "turin",
+            "barcellona": "barcelona",
+            "parigi": "paris",
+            "monaco": "munich",
+            "praga": "prague",
+            "londra": "london",
+            "vienna": "wien",
+            "new york": "new york city",
         }
-        alt = aliases.get(dest_l)
-        return alt in address_l if alt else False
+        alternatives = {dest_n}
+        alt = aliases.get(dest_n)
+        if alt:
+            alternatives.add(_norm_text(alt))
+
+        # Support reverse alias (e.g. destination already in english)
+        for k, v in aliases.items():
+            if _norm_text(v) == dest_n:
+                alternatives.add(_norm_text(k))
+
+        return any(token in address_n for token in alternatives if token)
 
     if daily_budget < 70:
-        logger.log_event("FINDER", "WARNING", f"Budget critico rilevato: {daily_budget}€/giorno. Uso Tavily.")
-        # Usiamo Tavily per trovare opzioni gratuite nella destinazione
-        logger.log_tool("TAVILY", f"Ricerca attività low-cost a {state['destination']}...")
-        query = f"free things to do and cheap eats in {state['destination']}"
-        low_cost_info = _maybe_tavily(query)
-        if low_cost_info:
-            budget_context_lines.append(low_cost_info)
+        logger.log_event("FINDER", "WARNING", f"Budget critico rilevato: {daily_budget}€/giorno.")
 
     updated_itinerary = []
     
@@ -230,37 +505,26 @@ def places_finder_node(state: TravelAgentState):
                 
             if results and isinstance(results, list) and len(results) > 0:
                 real_place = results[0]
-                cost_text = _maybe_tavily(f"{real_place.get('name')} {state['destination']}")
-                cost_info = None
-                if cost_text:
-                    cost_info = {
-                        "source": "tavily",
-                        "summary": cost_text
-                    }
-                    budget_context_lines.append(f"{real_place.get('name')}: {cost_text}")
                 validated_places.append({
                     "name": real_place.get("name"),
                     "address": real_place.get("address"),
                     "rating": real_place.get("rating", "N/A"),
-                    "description": "Verificato con Google Maps",
-                    "cost_info": cost_info
+                    "description": "Verificato con Google Maps"
                 })
                 logger.log_event("FINDER", "RESULT", f"Trovato: {real_place.get('name')}")
                 day_print_lines.append(
-                    f"{real_place.get('name')} | {real_place.get('address')} | rating: {real_place.get('rating', 'N/A')} | costi: {_summarize_cost_info(cost_info)}"
+                    f"{real_place.get('name')} | {real_place.get('address')} | rating: {real_place.get('rating', 'N/A')}"
                 )
             else:
                 logger.log_event("FINDER", "WARNING", f"Nessun match per: {place_name}")
-                cost_info = None
                 validated_places.append({
                     "name": place_name,
                     "address": place.get("address", "N/A"),
                     "rating": "N/A",
-                    "description": "Non verificato (Verifica quota API)",
-                    "cost_info": cost_info
+                    "description": "Non verificato (Verifica quota API)"
                 })
                 day_print_lines.append(
-                    f"{place_name} | {place.get('address', 'N/A')} | rating: N/A | costi: {_summarize_cost_info(cost_info)}"
+                    f"{place_name} | {place.get('address', 'N/A')} | rating: N/A"
                 )
         
         day['places'] = validated_places
@@ -271,8 +535,7 @@ def places_finder_node(state: TravelAgentState):
             for line in day_print_lines:
                 print(f"- {line}")
         
-    budget_context = "\n".join([line for line in budget_context_lines if line])
-    return {"budget_context": budget_context, "itinerary": updated_itinerary}
+    return {"budget_context": "", "itinerary": updated_itinerary}
 
 # --- 5. CONFIDENCE NODE (POST-FINDER) ---
 def confidence_evaluator_node(state: TravelAgentState):
@@ -280,40 +543,34 @@ def confidence_evaluator_node(state: TravelAgentState):
 
     itinerary = state.get("itinerary", [])
     reasons = []
-    needs_price_ack = False
     if not itinerary:
         confidence = 0.0
         reasons.append("Itinerario vuoto")
     else:
-        confidence = 0.8
-
         unverified = 0
         total_places = 0
-        missing_costs = 0
 
         for day in itinerary:
             for place in day.get("places", []):
                 total_places += 1
                 if place.get("description", "").startswith("Non verificato"):
                     unverified += 1
-                if not place.get("cost_info"):
-                    missing_costs += 1
 
         if total_places > 0:
-            unverified_ratio = unverified / total_places
-            confidence -= 0.4 * unverified_ratio
+            verified = total_places - unverified
+            verified_ratio = verified / total_places
+            confidence = verified_ratio
+            reasons.append(f"Verificati {verified}/{total_places} luoghi")
             if unverified > 0:
-                reasons.append(f"{unverified}/{total_places} luoghi non verificati")
-            if missing_costs > 0:
-                reasons.append(f"{missing_costs}/{total_places} luoghi senza info costi")
-                needs_price_ack = True
+                reasons.append(f"Non verificati {unverified}/{total_places}")
+        else:
+            confidence = 0.0
 
         budget_total = state.get("budget_total")
         total_budget = extract_budget_number(str(budget_total)) if budget_total else extract_budget_number(state.get("budget", ""))
         num_days = int(state['days']) if state['days'].isdigit() else 1
         daily_budget = total_budget / num_days
         if daily_budget < 60:
-            confidence -= 0.1
             reasons.append(f"Budget giornaliero basso ({round(daily_budget, 2)}€)")
 
     confidence = max(0.0, min(1.0, round(confidence, 2)))
@@ -326,20 +583,7 @@ def confidence_evaluator_node(state: TravelAgentState):
             "WARNING",
             f"Confidenza bassa ({confidence}). Motivi: {reason_text}. Richiesta revisione manuale."
         )
-    elif needs_price_ack:
-        reason_text = "; ".join(reasons) if reasons else "Mancano info costi"
-        logger.log_event(
-            "CONFIDENCE",
-            "WARNING",
-            f"Prezzi mancanti: {reason_text}. Richiesta conferma per proseguire."
-        )
-
-    feedback = state.get("critic_feedback")
-    if needs_price_ack:
-        price_ack = "PRICE_ACK: Mancano prezzi per alcune voci; potrebbero emergere spese addizionali."
-        feedback = f"{feedback} | {price_ack}" if feedback else price_ack
-
-    return {"confidence_score": confidence, "critic_feedback": feedback}
+    return {"confidence_score": confidence, "critic_feedback": state.get("critic_feedback")}
 
 # --- 5. CRITIC NODE ---
 def logistics_critic_node(state: TravelAgentState):
@@ -381,20 +625,11 @@ def publisher_node(state: TravelAgentState):
     return state
 
 def ask_human_node(state: TravelAgentState):
-    critic_feedback = state.get("critic_feedback") or ""
-    needs_price_ack = critic_feedback.startswith("PRICE_ACK:") or "PRICE_ACK:" in critic_feedback
-    if needs_price_ack:
-        logger.log_event("SYSTEM", "WARNING", "MANCANZA PREZZI")
-        print(Fore.YELLOW + "\nATTENZIONE: mancano prezzi per alcune voci.")
-        print("Potrebbero emergere spese addizionali non stimate.")
-    else:
-        logger.log_event("SYSTEM", "WARNING", f"CONFIDENZA BASSA ({state.get('confidence_score')})")
-        print(Fore.YELLOW + "\nATTENZIONE: l'AI non e' sicura dell'itinerario generato.")
+    logger.log_event("SYSTEM", "WARNING", f"CONFIDENZA BASSA ({state.get('confidence_score')})")
+    print(Fore.YELLOW + "\nATTENZIONE: l'AI non e' sicura dell'itinerario generato.")
     scelta = input(Fore.WHITE + "Vuoi procedere comunque? (s/n): ").lower().strip()
     
     if scelta == 's':
-        if needs_price_ack:
-            return {"is_approved": True, "critic_feedback": None}
         return {"is_approved": True, "critic_feedback": None}
     else:
         motivo = input("Cosa non va? Lascia un feedback per l'AI: ")

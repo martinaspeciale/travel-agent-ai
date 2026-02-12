@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, END
 from app.core.state import TravelAgentState
 from app.engine.nodes import (
-    init_node, travel_router_node, trip_planner_node, 
+    init_node, travel_router_node, flight_search_node, trip_planner_node,
     places_finder_node, confidence_evaluator_node, logistics_critic_node, publisher_node, ask_human_node, failure_handler_node
 )
 
@@ -9,9 +9,7 @@ def route_after_planner(state: TravelAgentState):
     return "continue"
 
 def route_after_confidence(state: TravelAgentState):
-    critic_feedback = state.get("critic_feedback") or ""
-    needs_price_ack = critic_feedback.startswith("PRICE_ACK:") or "PRICE_ACK:" in critic_feedback
-    if needs_price_ack or state["confidence_score"] < 0.7:
+    if state["confidence_score"] < 0.7:
         return "ask_human"
     return "continue"
 
@@ -29,6 +27,7 @@ workflow = StateGraph(TravelAgentState)
 
 workflow.add_node("init", init_node)
 workflow.add_node("router", travel_router_node)
+workflow.add_node("flight_search", flight_search_node)
 workflow.add_node("planner", trip_planner_node)
 workflow.add_node("finder", places_finder_node)
 workflow.add_node("confidence", confidence_evaluator_node)
@@ -39,7 +38,8 @@ workflow.add_node("failure_handler", failure_handler_node)
 
 workflow.set_entry_point("init")
 workflow.add_edge("init", "router")
-workflow.add_edge("router", "planner")
+workflow.add_edge("router", "flight_search")
+workflow.add_edge("flight_search", "planner")
 
 workflow.add_conditional_edges(
     "planner",

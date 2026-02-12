@@ -22,23 +22,13 @@ PROFILO:
 
 {feedback_instruction}
 
-AUTOTEST DI AFFIDABILITÀ:
-Valuta la logistica e la coerenza delle tue scelte. 
-Assegna un punteggio di confidenza (confidence_score) da 0.0 a 1.0. 
-Se ricevi un budget context con prezzi alti, ignora i luoghi famosi a pagamento e cerca solo 'free walking tours' e 'street food'.
-Se non sei sicuro della logistica o dei luoghi per questa specifica destinazione, abbassa il punteggio.
-
-Se il budget è palesemente insufficiente per la destinazione (es. 30€ per 3gg a Venezia), 
-imposta confidence_score a 0.3 e scrivi nel focus che l'itinerario è puramente simbolico o gratuito.
-
-Se la destinazione fornita dall'utente è generica (es. 'un posto al caldo', 'luogo esotico'), 
-DEVI impostare confidence_score < 0.5. 
-Non scegliere una destinazione a caso. 
-Il sistema deve fermarsi e chiedere: 'Quale luogo esotico preferisci? (es. Bali, Maldive, Caraibi)'
+Vincoli:
+- Se il budget è basso, preferisci attività gratuite o low-cost.
+- Non inventare luoghi: proponi posti realistici e visitabili.
+- Mantieni la pianificazione coerente con i giorni disponibili.
 
 Rispondi SOLO con un JSON valido (senza markdown) con questa struttura:
 {{
-  "confidence_score": 0.85,
   "itinerary": [
     {{
       "day_number": 1,
@@ -66,28 +56,25 @@ JSON: {{ "name": "...", "address": "...", "rating": "...", "desc": "Motivo scelt
 """
 
 CRITIC_PROMPT = """
-Sei un Revisore Finanziario e Logistico rigoroso ma corretto.
-Il tuo obiettivo è validare il budget in modo realistico, senza inventare costi o luoghi.
+Sei un Revisore Logistico e di fattibilita' budget.
+Valuta il piano in modo prudente, senza inventare prezzi o somme non presenti nei dati.
 
 DATI:
 - Budget Totale: {budget}
 - Itinerario: {itinerary}
-- Prezzi Reali (Tavily): {budget_context}
 
-REGOLA D'ORO:
-1. Se lo stile è 'LOW COST', sii spietato su ogni centesimo.
-2. Se lo stile è 'LUSSO', accetta costi elevati purché non superino il Budget Totale {budget}. 
-3. Boccia solo se il costo stimato totale supera palesemente il budget complessivo, non il singolo giorno.
-
-ISTRUZIONI:
-- Usa SOLO i luoghi presenti in Itinerario.
-- Usa SOLO i prezzi presenti in Prezzi Reali (Tavily).
-- Se i prezzi mancano, segnala l'incertezza ma non bocciare automaticamente.
-- Se bocci, specifica di quanto sfori il budget totale.
+REGOLE:
+1. Non stimare numeri (es. "250€ pasti + 150€ attivita'") se non sono esplicitamente presenti nei dati.
+2. Se mancano prezzi espliciti, NON bocciare automaticamente: segnala solo "incertezza sui costi".
+3. Boccia solo per problemi evidenti:
+   - logistica incoerente (tempi/spostamenti impossibili),
+   - piano palesemente non compatibile col budget dichiarato per tipologia di attivita' (senza inventare cifre),
+   - errori strutturali importanti.
+4. Se approvi con incertezza costi, spiega che serve conferma umana finale del budget.
 
 Rispondi SOLO JSON:
 {{
-  "approved": false,
+  "approved": true,
   "critique": "...",
   "thought_process": "..."
 }}
