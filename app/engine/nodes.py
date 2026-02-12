@@ -10,7 +10,7 @@ from app.core.logger import logger
 from app.core.utils import safe_json_parse
 from app.engine import prompts
 from app.core.utils import extract_budget_number
-from app.tools.search import search_prices_tool
+from app.tools.search import search_prices_tool, search_flights_tool
 
 init(autoreset=True)
 
@@ -52,6 +52,44 @@ def travel_router_node(state: TravelAgentState):
     data = safe_json_parse(response.content, default_value={"style": "RELAX"})
     logger.log_event("ROUTER", "THOUGHT", data.get("reasoning", "N/A"))
     return {"travel_style": data.get("style", "RELAX")}
+
+
+# --- 2b. FLIGHT SEARCH NODE (minimal wiring) ---
+def flight_search_node(state: TravelAgentState):
+    origin = (state.get("origin") or "").strip()
+    destination = (state.get("destination") or "").strip()
+    depart_date = (state.get("depart_date") or "").strip()
+    return_date = (state.get("return_date") or "").strip()
+
+    # Keep this step non-blocking: if key flight inputs are missing, continue normally.
+    if not origin or not destination:
+        logger.log_event("FLIGHTS", "SKIP", "Origin or destination missing, skipping flight search.")
+        return {
+            "flight_options": [],
+            "flight_summary": "Flight search skipped: missing origin or destination.",
+            "flight_confidence_score": 0.0,
+        }
+
+    logger.log_event("FLIGHTS", "START", f"Search flights {origin} -> {destination}")
+    rows = search_flights_tool(
+        origin=origin,
+        destination=destination,
+        depart_date=depart_date,
+        return_date=return_date,
+    )
+
+    if not rows:
+        return {
+            "flight_options": [],
+            "flight_summary": "No flight options found from configured sources.",
+            "flight_confidence_score": 0.0,
+        }
+
+    return {
+        "flight_options": rows,
+        "flight_summary": f"Found {len(rows)} candidate flight results.",
+        "flight_confidence_score": 0.5,
+    }
 
 # --- 3. PLANNER NODE (RIFATTO) ---
 def trip_planner_node(state: TravelAgentState):
