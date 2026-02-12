@@ -19,9 +19,9 @@ This project was developed as a practical case study based on concepts covered i
 | **The Artifact** | The output is not just text, but a structured and usable object. | [**`publisher.py`**](./app/tools/publisher.py) generates professional **Word (.docx)** and **HTML** reports. |
 | **Resilience & Self-Correction** | Error handling and feedback loops if the result is invalid. | [**`graph.py`**](./app/graph.py) (Critic loop) and [**`utils.py`**](./app/core/utils.py) (robust JSON parsing). |
 | **Observability: "The Kitchen"** | Monitoring the "thought process" (Reasoning) vs. Action. | [**`logger.py`**](./app/core/logger.py) tracks structured events (`THOUGHT` vs. `ACTION`) with color coding for debugging. |
-| **Grounding & Tools** | Using external search engines to anchor the LLM to real-world facts (prices, updates). | [**`search.py`**](./app/tools/search.py) integrates **Tavily API** for real-time price verification. |
+| **Grounding & Tools** | Using external APIs to anchor the agent to real-world facts (places, flights). | [**`maps.py`**](./app/tools/maps.py) uses Google Maps for place validation; [**`search.py`**](./app/tools/search.py) uses **SerpApi (Google Flights)** + local IATA seed for flight suggestions. |
 | **Metacognition** | The agent evaluates confidence after place verification to reduce hallucinations. | [**`nodes.py`**](./app/engine/nodes.py) calculates a `confidence_score` post-Finder. |
-| **Human-in-the-Loop (HITL)** | Manual intervention when the agent is uncertain or prices are missing. | [**`graph.py`**](./app/graph.py) implements an interruption point (`ask_human`) when confidence is < 0.7 or price confirmation is needed. |
+| **Human-in-the-Loop (HITL)** | Manual intervention when the agent is uncertain. | [**`graph.py`**](./app/graph.py) implements an interruption point (`ask_human`) when confidence is `< 0.7`. |
 | **Robustness** | Managing edge cases like extreme budgets, multipliers, or ambiguous inputs. | [**`utils.py`**](./app/core/utils.py) implements regex-based budget parsing (e.g., "100k", "1 milione"). |
 
 ---
@@ -29,6 +29,7 @@ This project was developed as a practical case study based on concepts covered i
 ## Key Features
 
 * **Planner + Critic Loop:** Generates an itinerary and retries when constraints are not satisfied.
+* **Flight Proposal Loop:** Searches outbound/return options via SerpApi, proposes best option, and asks user confirmation before proceeding.
 * **Critic-in-the-Loop:** A "Critic" node evaluates logistics (distances, timing) and rejects impossible itineraries, forcing the Planner to retry.
 * **Real-World Data:** Uses Google Maps Places API to find real addresses, ratings, and reviews (preventing location hallucinations).
 * **Dual-Format Artifacts:** Automatically generates both a **Word Document (.docx)** for editing and an **HTML Report** with visual maps.
@@ -40,7 +41,7 @@ This project was developed as a practical case study based on concepts covered i
 
 ### 1. Clone the repository
 ```bash
-git clone git clone https://github.com/martinaspeciale/travel-agent-ai.git
+git clone https://github.com/martinaspeciale/travel-agent-ai.git
 cd travel-agent-ai
 ```
 
@@ -60,14 +61,16 @@ Create a `.env` file in the project root and add your keys:
 ```env
 GROQ_API_KEY=gsk_...
 GOOGLE_MAPS_API_KEY=AIza...
+SERPAPI_API_KEY=...
 # MISTRAL_API_KEY=... (Optional fallback)
-TAVILY_API_KEY=tvly-...
+# TAVILY_API_KEY=tvly-... (Optional / legacy helper)
 ```
 API keys used to run the agent can be found here:
 * **Groq API:** [console.groq.com](https://console.groq.com/keys)
 * **Google Maps API:** [console.cloud.google.com](https://console.cloud.google.com/google/maps-apis/credentials)
+* **SerpApi:** [serpapi.com](https://serpapi.com/)
 * **Mistral API:** [console.mistral.ai](https://console.mistral.ai/api-keys/)
-* **Tavily Search API:** [app.tavily.com](https://app.tavily.com/home)
+* **Tavily Search API (optional):** [app.tavily.com](https://app.tavily.com/home)
 
 ---
 
@@ -81,10 +84,12 @@ python main.py
 
 Follow the on-screen instructions, entering:
 1.  **Destination** 
-2.  **Days** 
-3.  **Interests** 
-4.  **Total Budget (EUR)**
-5.  **Travelers**
+2.  **Interests** 
+3.  **Total Budget (EUR)**
+4.  **Travelers**
+5.  **Flight origin (optional)**
+6.  **Departure date (required)**
+7.  **Return date (optional)**
 
 The agent will start the reasoning process (displayed in logs) and eventually generate:
 1.  A detailed itinerary in the terminal.
@@ -102,18 +107,21 @@ INIT
 ROUTER
   |
   v
+FLIGHT_SEARCH
+  |
+  v
 PLANNER
   |
   v
-FINDER (maps + price context)
+FINDER (Google Maps place validation)
   |
   v
 CONFIDENCE (post-verification)
   | \
-  |  \-- if low confidence OR missing prices --> ASK_HUMAN
-  |                                         | 
-  |                                         +-- approve --> CRITIC
-  |                                         +-- reject  --> PLANNER
+  |  \-- if low confidence --> ASK_HUMAN
+  |                                | 
+  |                                +-- approve --> CRITIC
+  |                                +-- reject  --> PLANNER
   v
 CRITIC
   | \
@@ -137,10 +145,12 @@ travel-agent-ai/
 │   ├── engine/         # Cognitive Layer
 │   │   ├── nodes.py    # Decision Logic (Router, Planner, Critic)
 │   │   └── prompts.py  # System Prompts
-│   └── tools/          # Interface Layer
-│       ├── maps.py     # Google Maps API Wrapper
-│       ├── search.py   # Tavily API Wrapper (Price Grounding)
-│       └── publisher.py# Report Generator (HTML & DOCX)
+│   ├── tools/          # Interface Layer
+│   │   ├── maps.py     # Google Maps API Wrapper
+│   │   ├── search.py   # SerpApi Google Flights Wrapper + IATA resolution
+│   │   └── publisher.py# Report Generator (HTML & DOCX)
+│   └── data/
+│       └── cities_airports_seed.csv  # Local city->IATA seed used for flight normalization
 ├── requirements.txt    # Python Dependencies
 └── .env                # Environment Variables (API Keys)
 ```
