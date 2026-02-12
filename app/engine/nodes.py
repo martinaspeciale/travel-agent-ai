@@ -338,7 +338,7 @@ def flight_search_node(state: TravelAgentState):
 
 # --- 3. PLANNER NODE (RIFATTO) ---
 def trip_planner_node(state: TravelAgentState):
-    logger.log_event("PLANNER", "START", "Pianificazione con Autovalutazione")
+    logger.log_event("PLANNER", "START", "Pianificazione")
     
     if state.get("critic_feedback"):
         # Iniettiamo un comando di "Cambio Rotta"
@@ -388,7 +388,7 @@ def trip_planner_node(state: TravelAgentState):
     # Chiamata LLM
     response = llm.invoke([HumanMessage(content=formatted_prompt)])
     
-    # Parsing del nuovo formato JSON (che ora include confidence_score e itinerary)
+    # Parsing JSON planner output
     data = safe_json_parse(response.content)
     
     # Estrazione sicura dei dati
@@ -413,7 +413,6 @@ def trip_planner_node(state: TravelAgentState):
 
     return {
         "itinerary": itinerary_data, 
-        "confidence_score": state.get("confidence_score", 0.0),
         "is_approved": False,
         "critic_feedback": status_feedback,
         "retry_count": state.get("retry_count", 0) + 1,
