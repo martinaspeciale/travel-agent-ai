@@ -190,6 +190,7 @@ Decision-making must explicitly handle \textbf{state uncertainty}.
 
 % SLIDE 7
 \begin{frame}{Why POMDPs for Agentic AI? \cite{kaelbling1998}}
+\small
 We introduce POMDPs because they provide a \textbf{canonical language}
 for reasoning about \textbf{sequential decisions under partial observability}.
 
@@ -603,7 +604,7 @@ This reframes retrieval quality as \textbf{perception accuracy}.
     \textbf{2. Message Passing (Actor Model)}
     \begin{itemize}
         \item Agent A sends a direct message to Agent B.
-        \item \textit{Format:} \texttt{\{from: "Researcher", to: "Writer", content: "..."\}}
+        \item \textit{Format:} \texttt{from: "Researcher", to: "Writer", content: "..."}
     \end{itemize}
     
     \textbf{3. Supervisor / Moderator}
@@ -678,7 +679,7 @@ This reframes retrieval quality as \textbf{perception accuracy}.
     
     \textbf{Best Practices:}
     \begin{itemize}
-        \item \textbf{Structured JSON:} No plain text. \texttt{\{"timestamp": "...", "event": "tool\_call", "agent": "finance", "data": \{...\}\}}
+        \item \textbf{Structured JSON:} No plain text. \texttt{"timestamp": "...", "event": "tool\_call", "agent": "finance", "data": ...}
         \item \textbf{Inputs \& Outputs:} Log the prompt \textit{before} the call and the response \textit{after}.
         \item \textbf{Chain of Thought:} Log intermediate reasoning summaries or decision metadata, not raw thoughts.
     \end{itemize}
@@ -959,7 +960,7 @@ Persona optimizes \textbf{experience}; task-orientation optimizes \textbf{succes
 
 % SLIDE 42
 \begin{frame}[fragile]{Practice: LangChain as Building Blocks (LCEL)}
-\small
+\scriptsize
 LangChain is most useful when treated as \textbf{composable building blocks}:
 \texttt{Prompt} $\rightarrow$ \texttt{Model} $\rightarrow$ (\texttt{Tools}) $\rightarrow$ \texttt{Output}.
 
@@ -967,14 +968,13 @@ LangChain is most useful when treated as \textbf{composable building blocks}:
 \textbf{LCEL (LangChain Expression Language)} lets you compose steps with \texttt{|}.
 
 \vspace{0.15cm}
-\begin{lstlisting}
+\begin{verbatim}
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
 
 @tool
-def add(a: int, b: int) -> int:
-    """Add two integers."""
+def add(a: int, b: int):
     return a + b
 
 prompt = ChatPromptTemplate.from_messages([
@@ -983,14 +983,10 @@ prompt = ChatPromptTemplate.from_messages([
 ])
 
 llm = ChatOpenAI(model="gpt-4o-mini").bind_tools([add])
-
 chain = prompt | llm
-
 msg = chain.invoke({"question": "Compute 19 + 23 using the tool."})
-
-# The model proposes tool calls (if any):
 print(msg.tool_calls)
-\end{lstlisting}
+\end{verbatim}
 
 \vspace{0.15cm}
 \begin{block}{What this shows (and what it does NOT)}
@@ -1004,32 +1000,31 @@ print(msg.tool_calls)
 
 % SLIDE 43
 \begin{frame}[fragile]{Practice: LangGraph State Machine (Minimal)}
-\small
-\begin{lstlisting}
+\scriptsize
+\begin{verbatim}
 from typing import TypedDict
 from langgraph.graph import StateGraph, END
 
 class State(TypedDict):
     n: int
 
-def step(state: State) -> State:
+def step(state):
     return {"n": state["n"] + 1}
 
-def route(state: State) -> str:
-    return END if state["n"] >= 3 else "step"
+def route(state):
+    allowed = [0, 1, 2]
+    return "step" if state["n"] in allowed else END
 
 g = StateGraph(State)
 g.add_node("step", step)
 g.set_entry_point("step")
-g.add_conditional_edges("step", route, {
-    "step": "step",
-    END: END
-})
+g.add_conditional_edges("step", route, {"step": "step", END: END})
 
 app = g.compile()
 print(app.invoke({"n": 0}))  # {'n': 3}
-\end{lstlisting}
+\end{verbatim}
 
+\vspace{-0.2cm}
 \begin{block}{Key idea}
 LangGraph makes \textbf{state} and \textbf{control-flow} explicit:
 \textit{update state} $\rightarrow$ \textit{route} $\rightarrow$ loop/stop.
