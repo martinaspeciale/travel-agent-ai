@@ -184,10 +184,11 @@ These scenarios are designed to stress-test the architecture and demonstrate the
 
 ---
 
-## Reference Material
+## Course Slides
 
-The architectural decisions, patterns, and observability pillars implemented in this project are based on the following lecture notes:
+An integral part of this course project was preparing and evolving the slide material alongside the implementation.
 
-* 📄 **[Agentic AI: From Architecture to Orchestration and Quality](./Agentic%20AI%20-%20SEAI.pdf)**
-    * *Author:* prof. Marco Cococcioni 
+* **Baseline deck:** [`slides/agentic-ai-seai-v0.tex`](./slides/agentic-ai-seai-v0.tex)
+* **Enhanced course deck:** [`slides/agentic-ai-seai.tex`](./slides/agentic-ai-seai.tex)
+* **Project deep dive deck:** [`slides/travel-agent-ai-project.tex`](./slides/travel-agent-ai-project.tex)
     
