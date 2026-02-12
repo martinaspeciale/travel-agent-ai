@@ -155,7 +155,7 @@ with verifiable places and actionable outputs.
 \textbf{Persistent graph state (TypedDict)}
 \begin{itemize}
     \item Input: \texttt{destination}, \texttt{interests}, \texttt{budget}, \texttt{companion}, \texttt{origin}, \texttt{depart\_date}, \texttt{return\_date}
-    \item Derived field: \texttt{days} (auto-computed from dates, with fallback)
+    \item \texttt{days}: auto-computed from dates when possible, otherwise requested explicitly
     \item Planning output: \texttt{travel\_style}, \texttt{itinerary}
     \item Flight output: \texttt{flight\_options}, \texttt{flight\_summary}
     \item Control fields: \texttt{confidence\_score}, \texttt{critic\_feedback}, \texttt{retry\_count}, \texttt{is\_approved}

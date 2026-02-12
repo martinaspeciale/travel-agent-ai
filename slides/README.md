@@ -8,6 +8,9 @@
 - `agentic-ai-seai.tex`  
   Revised and extended version.
 
+- `travel-agent-ai-project.tex`  
+  Project-focused deck using the same Beamer template, with architecture, graph flow, state model, tool-grounding strategy, and HITL/critic loop details for this repository.
+
 ---
 ## Baseline-to-Revised Slide Mapping
 
