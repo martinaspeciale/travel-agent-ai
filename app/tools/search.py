@@ -1,4 +1,5 @@
 import os
+import re
 from tavily import TavilyClient
 from app.core.logger import logger
 from dotenv import load_dotenv
@@ -6,6 +7,36 @@ from dotenv import load_dotenv
 load_dotenv()
 
 tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+
+
+def _is_flight_result(title: str, content: str, url: str, origin: str, destination: str) -> bool:
+    text = f"{title} {content} {url}".lower()
+    origin_l = (origin or "").strip().lower()
+    destination_l = (destination or "").strip().lower()
+
+    positive_markers = [
+        "flight", "flights", "airfare", "airline", "volo", "voli",
+        "andata", "ritorno", "departure", "arrival", "round trip", "one way",
+    ]
+    negative_markers = [
+        "car rental", "car-rental", "noleggio auto",
+        "hotel", "booking hotel", "vacation rental", "taxi", "bus", "train",
+        "parking", "cruise", "traghetto", "ferry", "hostel",
+    ]
+
+    if any(marker in text for marker in negative_markers):
+        return False
+
+    if not any(marker in text for marker in positive_markers):
+        return False
+
+    # Richiediamo anche un minimo di segnale sulla tratta richiesta.
+    route_signals = 0
+    if origin_l and origin_l in text:
+        route_signals += 1
+    if destination_l and destination_l in text:
+        route_signals += 1
+    return route_signals >= 1
 
 def search_prices_tool(query: str):
     """
@@ -48,14 +79,17 @@ def search_flights_tool(origin: str, destination: str, depart_date: str = "", re
         if return_date:
             date_part += f" return {return_date}"
 
-        search_query = f"flights from {origin} to {destination}{date_part}"
+        search_query = (
+            f"best flights from {origin} to {destination}{date_part} "
+            "airfare economy round trip one way"
+        )
 
         # Domini iniziali: estendibili in seguito senza toccare il flow.
         include_domains = [
             "skyscanner.com",
-            "google.com",
             "kayak.com",
             "momondo.com",
+            "expedia.com",
         ]
 
         results = tavily_client.search(
@@ -73,6 +107,10 @@ def search_flights_tool(origin: str, destination: str, depart_date: str = "", re
             logger.log_event("TAVILY_FLIGHTS", "RESULT", title)
             if content:
                 logger.log_event("TAVILY_FLIGHTS", "INFO", content[:240])
+
+            if not _is_flight_result(title, content, url, origin, destination):
+                logger.log_event("TAVILY_FLIGHTS", "SKIP", f"Non-flight result filtered: {title}")
+                continue
 
             flight_rows.append({
                 "title": title,

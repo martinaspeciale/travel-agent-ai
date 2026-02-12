@@ -62,6 +62,23 @@ def travel_router_node(state: TravelAgentState):
 
 # --- 2b. FLIGHT SEARCH NODE (minimal wiring) ---
 def flight_search_node(state: TravelAgentState):
+    def _extract_price_value(*chunks):
+        text = " ".join([(c or "") for c in chunks])
+        patterns = [
+            r"€\s*([0-9]+(?:[.,][0-9]{1,2})?)",
+            r"([0-9]+(?:[.,][0-9]{1,2})?)\s*€",
+            r"\$\s*([0-9]+(?:[.,][0-9]{1,2})?)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if match:
+                value = match.group(1).replace(",", ".")
+                try:
+                    return float(value)
+                except ValueError:
+                    return None
+        return None
+
     origin = (state.get("origin") or "").strip()
     destination = (state.get("destination") or "").strip()
     depart_date = (state.get("depart_date") or "").strip()
@@ -76,25 +93,98 @@ def flight_search_node(state: TravelAgentState):
             "flight_confidence_score": 0.0,
         }
 
-    logger.log_event("FLIGHTS", "START", f"Search flights {origin} -> {destination}")
-    rows = search_flights_tool(
-        origin=origin,
-        destination=destination,
-        depart_date=depart_date,
-        return_date=return_date,
-    )
+    current_depart_date = depart_date
+    max_attempts = 3
+    attempts = 0
 
-    if not rows:
+    while attempts < max_attempts:
+        attempts += 1
+        logger.log_event(
+            "FLIGHTS",
+            "START",
+            f"Search flights {origin} -> {destination} (depart: {current_depart_date or 'N/D'})"
+        )
+
+        rows = search_flights_tool(
+            origin=origin,
+            destination=destination,
+            depart_date=current_depart_date,
+            return_date=return_date,
+        )
+
+        if not rows:
+            logger.log_event("FLIGHTS", "WARNING", "Nessuna opzione volo trovata.")
+            change = input(
+                Fore.WHITE + "Nessun volo trovato. Vuoi cambiare data andata? (s/n): "
+            ).strip().lower()
+            if change == "s":
+                new_date = input("Nuova data andata (YYYY-MM-DD): ").strip()
+                if new_date:
+                    current_depart_date = new_date
+                    continue
+            return {
+                "flight_options": [],
+                "flight_summary": "No flight options found from configured sources.",
+                "flight_confidence_score": 0.0,
+                "depart_date": current_depart_date or None,
+            }
+
+        enriched_rows = []
+        for row in rows:
+            title = row.get("title", "")
+            content = row.get("content", "")
+            price_value = _extract_price_value(title, content)
+            enriched_rows.append({**row, "price_value": price_value})
+
+        sorted_rows = sorted(
+            enriched_rows,
+            key=lambda r: r["price_value"] if r.get("price_value") is not None else float("inf")
+        )
+        best = sorted_rows[0]
+
+        best_price = (
+            f"{best.get('price_value'):.2f}" if best.get("price_value") is not None else "n/d"
+        )
+        logger.log_event(
+            "FLIGHTS",
+            "RESULT",
+            f"Proposta volo: {best.get('title', 'N/D')} | prezzo stimato: {best_price}"
+        )
+        print("\nProposta volo piu' economica trovata:")
+        print(f"- {best.get('title', 'N/D')}")
+        if best.get("url"):
+            print(f"- Link: {best.get('url')}")
+        choice = input(
+            "Confermi questa opzione? (s=ok / n=cambia data / skip=continua senza volo): "
+        ).strip().lower()
+
+        if choice == "s":
+            return {
+                "flight_options": sorted_rows,
+                "flight_summary": f"Best option confirmed: {best.get('title', 'N/D')}",
+                "flight_confidence_score": 0.8 if best.get("price_value") is not None else 0.5,
+                "depart_date": current_depart_date or None,
+            }
+
+        if choice == "n":
+            new_date = input("Nuova data andata (YYYY-MM-DD): ").strip()
+            if new_date:
+                current_depart_date = new_date
+                continue
+
+        # skip o input non riconosciuto => prosegui senza bloccare il flusso
         return {
-            "flight_options": [],
-            "flight_summary": "No flight options found from configured sources.",
-            "flight_confidence_score": 0.0,
+            "flight_options": sorted_rows,
+            "flight_summary": "Flight suggestions collected but not confirmed by user.",
+            "flight_confidence_score": 0.4,
+            "depart_date": current_depart_date or None,
         }
 
     return {
-        "flight_options": rows,
-        "flight_summary": f"Found {len(rows)} candidate flight results.",
-        "flight_confidence_score": 0.5,
+        "flight_options": [],
+        "flight_summary": "Flight search stopped after max attempts.",
+        "flight_confidence_score": 0.0,
+        "depart_date": current_depart_date or None,
     }
 
 # --- 3. PLANNER NODE (RIFATTO) ---
