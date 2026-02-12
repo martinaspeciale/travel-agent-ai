@@ -36,3 +36,52 @@ def search_prices_tool(query: str):
     except Exception as e:
         logger.log_event("TOOL", "ERROR", f"Tavily error: {e}")
         return "Informazioni sui prezzi non disponibili."
+
+
+def search_flights_tool(origin: str, destination: str, depart_date: str = "", return_date: str = ""):
+    """
+    Cerca opzioni voli tramite Tavily, limitando le fonti a domini travel affidabili.
+    Ritorna una lista di risultati grezzi (title/content/url) da far elaborare ai nodi.
+    """
+    try:
+        date_part = f" depart {depart_date}" if depart_date else ""
+        if return_date:
+            date_part += f" return {return_date}"
+
+        search_query = f"flights from {origin} to {destination}{date_part}"
+
+        # Domini iniziali: estendibili in seguito senza toccare il flow.
+        include_domains = [
+            "skyscanner.com",
+            "google.com",
+            "kayak.com",
+            "momondo.com",
+        ]
+
+        results = tavily_client.search(
+            query=search_query,
+            max_results=5,
+            include_domains=include_domains,
+        )
+
+        flight_rows = []
+        for res in results.get("results", []):
+            title = res.get("title", "No title")
+            content = (res.get("content") or "").strip()
+            url = res.get("url", "")
+
+            logger.log_event("TAVILY_FLIGHTS", "RESULT", title)
+            if content:
+                logger.log_event("TAVILY_FLIGHTS", "INFO", content[:240])
+
+            flight_rows.append({
+                "title": title,
+                "content": content,
+                "url": url,
+                "source": "tavily",
+            })
+
+        return flight_rows
+    except Exception as e:
+        logger.log_event("TOOL", "ERROR", f"Tavily flights error: {e}")
+        return []
