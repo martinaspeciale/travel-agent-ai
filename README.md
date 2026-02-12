@@ -2,38 +2,38 @@
 
 > **An autonomous AI agent for travel planning, built following the principles of "Agentic AI: From Architecture to Orchestration".**
 
-This project implements a **Stateful Multi-Agent Cognitive Architecture** powered by *LangGraph*, designed to orchestrate complex decision-making flows through a *persistent shared state*. Unlike linear systems, this architecture enables *Self-Correction Loops* between Planning and Critic nodes, ensuring real-world *grounding* via external APIs and full *trajectory observability* through a custom-built Tracing system.
+This project implements a **stateful graph-based agent workflow** powered by *LangGraph*, designed to orchestrate complex decision-making through a *persistent shared state*. Unlike linear systems, this architecture enables *Self-Correction Loops* between Planning and Critic nodes, real-world *grounding* via external APIs, and full *trajectory observability* through a custom tracing layer.
 
 ---
 
 ## Theoretical Architecture vs. Implementation
 
-This project was developed as a practical case study based on concepts covered in the **SEAI - Agentic AI** course. Below is the mapping between the theoretical concepts and the codebase:
+This project is the implementation counterpart of the course slides. The table below reflects the **current runtime architecture**.
 
-| Theoretical Concept | Description | Code Implementation |
-| :--- | :--- | :--- |
-| **Anatomy of an Agent** | The agent is a system composed of Brain (LLM), Memory, Tools, and Planning. | [**`nodes.py`**](./app/engine/nodes.py) (Brain), [**`state.py`**](./app/core/state.py) (Memory), [**`maps.py`**](./app/tools/maps.py) (Tools). |
-| **Cognitive Architectures: Planner** | Generates an itinerary proposal based on style, budget, and constraints. | [**`nodes.py`**](./app/engine/nodes.py) (using [**`prompts.py`**](./app/engine/prompts.py)) produces the initial itinerary proposal. |
-| **Memory & State Management** | Maintaining context across steps (User input, drafts, feedback). | [**`state.py`**](./app/core/state.py) defines the `TravelAgentState` (TypedDict) which persists data in the graph. |
-| **Tool Use & Function Calling** | Ability to act in the real world via deterministic APIs. | [**`maps.py`**](./app/tools/maps.py) integrates Google Maps API to fetch real places, addresses, and ratings. |
-| **The Artifact** | The output is not just text, but a structured and usable object. | [**`publisher.py`**](./app/tools/publisher.py) generates professional **Word (.docx)** and **HTML** reports. |
-| **Resilience & Self-Correction** | Error handling and feedback loops if the result is invalid. | [**`graph.py`**](./app/graph.py) (Critic loop) and [**`utils.py`**](./app/core/utils.py) (robust JSON parsing). |
-| **Observability: "The Kitchen"** | Monitoring the "thought process" (Reasoning) vs. Action. | [**`logger.py`**](./app/core/logger.py) tracks structured events (`THOUGHT` vs. `ACTION`) with color coding for debugging. |
-| **Grounding & Tools** | Using external APIs to anchor the agent to real-world facts (places, flights). | [**`maps.py`**](./app/tools/maps.py) uses Google Maps for place validation; [**`search.py`**](./app/tools/search.py) uses **SerpApi (Google Flights)** + local IATA seed for flight suggestions. |
-| **Metacognition** | The agent evaluates confidence after place verification to reduce hallucinations. | [**`nodes.py`**](./app/engine/nodes.py) calculates a `confidence_score` post-Finder. |
-| **Human-in-the-Loop (HITL)** | Manual intervention when the agent is uncertain. | [**`graph.py`**](./app/graph.py) implements an interruption point (`ask_human`) when confidence is `< 0.7`. |
-| **Robustness** | Managing edge cases like extreme budgets, multipliers, or ambiguous inputs. | [**`utils.py`**](./app/core/utils.py) implements regex-based budget parsing (e.g., "100k", "1 milione"). |
+| Slide concept | In this project |
+| :--- | :--- |
+| **Stateful orchestration** | LangGraph workflow with persistent `TravelAgentState` shared across nodes ([`app/graph.py`](./app/graph.py), [`app/core/state.py`](./app/core/state.py)). |
+| **Intent routing** | `ROUTER` infers travel style and normalizes intent before planning ([`app/engine/nodes.py`](./app/engine/nodes.py)). |
+| **Tool-grounded action space** | `FLIGHT_SEARCH` uses SerpApi + local IATA seed; `FINDER` validates places via Google Maps ([`app/tools/search.py`](./app/tools/search.py), [`app/tools/maps.py`](./app/tools/maps.py), [`app/data/cities_airports_seed.csv`](./app/data/cities_airports_seed.csv)). |
+| **Planning under constraints** | `PLANNER` drafts itinerary conditioned on destination, dates, budget, and companion profile ([`app/engine/prompts.py`](./app/engine/prompts.py)). |
+| **Post-action verification** | `FINDER` rewrites places as verified/non-verified based on tool responses ([`app/engine/nodes.py`](./app/engine/nodes.py)). |
+| **Confidence as control signal** | `CONFIDENCE` computes score from verified-place ratio; this controls HITL routing ([`app/engine/nodes.py`](./app/engine/nodes.py), [`app/graph.py`](./app/graph.py)). |
+| **Human-in-the-Loop gating** | If confidence `< 0.7`, `ASK_HUMAN` can approve continuation or force re-planning ([`app/graph.py`](./app/graph.py)). |
+| **Self-correction loop** | `CRITIC` can reject and return feedback; planner retries up to max attempts, then `FAILURE_HANDLER` ([`app/graph.py`](./app/graph.py)). |
+| **Artifact-oriented output** | Final state is published as terminal summary + HTML + DOCX ([`app/tools/publisher.py`](./app/tools/publisher.py)). |
+| **Observability** | Structured logs track thought/action/tool/result events for each node ([`app/core/logger.py`](./app/core/logger.py)). |
 
 ---
 
 ## Key Features
 
-* **Planner + Critic Loop:** Generates an itinerary and retries when constraints are not satisfied.
-* **Flight Proposal Loop:** Searches outbound/return options via SerpApi, proposes best option, and asks user confirmation before proceeding.
-* **Critic-in-the-Loop:** A "Critic" node evaluates logistics (distances, timing) and rejects impossible itineraries, forcing the Planner to retry.
-* **Real-World Data:** Uses Google Maps Places API to find real addresses, ratings, and reviews (preventing location hallucinations).
-* **Dual-Format Artifacts:** Automatically generates both a **Word Document (.docx)** for editing and an **HTML Report** with visual maps.
-* **Observability:** Real-time color-coded terminal logs show exactly what the AI is "thinking" and when it is using a tool.
+* **Date-first planning flow:** Departure is required, return is optional; trip length is auto-derived from valid dates or requested explicitly.
+* **Flight proposal loop:** SerpApi + local IATA seed resolve routes and suggest best outbound/return options with user confirmation.
+* **Planner-Critic retry loop:** The planner drafts, the critic validates feasibility, and rejected plans are retried with feedback (up to max attempts).
+* **Deterministic confidence gate:** Reliability is computed from verified-place ratio after Google Maps grounding, then used to trigger HITL (`< 0.7`).
+* **Real-world grounding:** Google Maps Places validation reduces location hallucinations (address/rating verification).
+* **Artifact publishing:** Final approved results are exported as terminal summary, **HTML**, and **DOCX** reports.
+* **Observability:** Structured, color-coded logs expose node actions, tool calls, and decision transitions.
 
 ---
 
@@ -59,18 +59,19 @@ pip install -r requirements.txt
 ### 4. Configure API Keys
 Create a `.env` file in the project root and add your keys:
 ```env
+# Required
 GROQ_API_KEY=gsk_...
 GOOGLE_MAPS_API_KEY=AIza...
 SERPAPI_API_KEY=...
+
+# Optional
 # MISTRAL_API_KEY=... (Optional fallback)
-# TAVILY_API_KEY=tvly-... (Optional / legacy helper)
 ```
 API keys used to run the agent can be found here:
 * **Groq API:** [console.groq.com](https://console.groq.com/keys)
 * **Google Maps API:** [console.cloud.google.com](https://console.cloud.google.com/google/maps-apis/credentials)
 * **SerpApi:** [serpapi.com](https://serpapi.com/)
 * **Mistral API:** [console.mistral.ai](https://console.mistral.ai/api-keys/)
-* **Tavily Search API (optional):** [app.tavily.com](https://app.tavily.com/home)
 
 ---
 
@@ -88,8 +89,10 @@ Follow the on-screen instructions, entering:
 3.  **Total Budget (EUR)**
 4.  **Travelers**
 5.  **Flight origin (optional)**
-6.  **Departure date (required)**
-7.  **Return date (optional)**
+6.  **Departure date (required, format `YYYY-MM-DD`)**
+7.  **Return date (optional, format `YYYY-MM-DD`)**
+
+`days` is derived automatically when both dates are valid; otherwise it is requested explicitly.
 
 The agent will start the reasoning process (displayed in logs) and eventually generate:
 1.  A detailed itinerary in the terminal.
@@ -154,33 +157,6 @@ travel-agent-ai/
 ├── requirements.txt    # Python Dependencies
 └── .env                # Environment Variables (API Keys)
 ```
-
-<!---
-
-## Test Scenarios & Edge Cases
-
-These scenarios are designed to stress-test the architecture and demonstrate the core pillars of **Robustness** and **Metacognition**.
-
-### 1. The "Survival" Test (Extreme Budget)
-* **Input:** `Venezia, 2 days, 30 EUR, Couple`
-* **Purpose:** Verifies **Safety & Grounding**. 
-* **Expected Behavior:** The **Critic** must reject expensive attractions (e.g., Doge's Palace) using real-time **Tavily** data. It forces the **Planner** to pivot toward free activities like the *Rialto Market* or walking tours to stay within the €15/day limit.
-
-### 2. The "Ambiguity" Test (Human-in-the-Loop)
-* **Input:** `An exotic place, 5 days, Medium, Solo`
-* **Purpose:** Verifies **Metacognition & HITL**.
-* **Expected Behavior:** Due to the missing destination, the agent assigns a `confidence_score < 0.7`. It triggers the `ask_human_node`, pausing the graph execution to ask the user for clarification before wasting API tokens.
-
-### 3. The "Millionaire" Test (Robust Parsing)
-* **Input:** `Dubai, 3 days, 100k, Luxury, Family`
-* **Purpose:** Verifies **Robustness & Efficiency**.
-* **Expected Behavior:** The `extract_budget_number` utility must correctly parse "100k" into `100000.0`. The system bypasses low-budget web searches (Efficiency) and focuses on high-end hospitality and exclusive experiences.
-
-### 4. The "Teleportation" Test (Logical Reasoning)
-* **Input:** `Tokyo and New York, 1 day, Luxury, Solo`
-* **Purpose:** Verifies **Logical Consistency**.
-* **Expected Behavior:** Even with an unlimited budget, the **Critic** must reject the itinerary. It identifies the physical impossibility of visiting both cities in 24 hours, demonstrating that the agent understands spatial and temporal constraints beyond simple text generation.
--->
 
 ---
 
