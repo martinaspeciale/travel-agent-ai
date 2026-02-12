@@ -124,7 +124,8 @@ Trace ID: {self.trace_id}
         colors = {
             "ROUTER": Fore.GREEN, "PLANNER": Fore.CYAN, 
             "FINDER": Style.BRIGHT + Fore.GREEN, "CRITIC": Fore.YELLOW, 
-            "PUBLISHER": Fore.GREEN, "ERROR": Fore.RED, "INIT": Style.DIM + Fore.GREEN
+            "PUBLISHER": Fore.GREEN, "ERROR": Fore.RED, "INIT": Style.DIM + Fore.GREEN,
+            "TAVILY": Fore.MAGENTA, "TAVILY_FLIGHTS": Style.BRIGHT + Fore.MAGENTA
         }
         color = colors.get(node_name, Fore.GREEN)
         
@@ -151,7 +152,8 @@ Trace ID: {self.trace_id}
     def log_tool(self, tool_name, action_desc):
         latency = self._calculate_latency()
         timestamp = datetime.now().strftime("%H:%M:%S")
-        color = Fore.BLUE
+        tool_name_upper = (tool_name or "").upper()
+        color = Fore.MAGENTA if "TAVILY" in tool_name_upper else Fore.BLUE
         
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
         tab_pad = self._pad_after_prefix(prefix)
