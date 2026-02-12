@@ -81,22 +81,24 @@ def init_node(state: TravelAgentState):
     return_date = input(f"{Fore.GREEN}>> Data ritorno (YYYY-MM-DD, opzionale)? {Style.RESET_ALL}").strip()
 
     days = ""
-    if depart_date and return_date:
-        d1 = _parse_flexible_date(depart_date)
+    d1 = _parse_flexible_date(depart_date)
+    if return_date:
         d2 = _parse_flexible_date(return_date)
         if d1 and d2:
             delta = (d2 - d1).days + 1
             if delta > 0:
                 days = str(delta)
                 logger.log_event("INIT", "INFO", f"Giorni calcolati automaticamente dalle date: {days}")
+            else:
+                logger.log_event("INIT", "WARNING", "Data ritorno precedente alla partenza: giorni richiesti manualmente.")
+        else:
+            logger.log_event("INIT", "WARNING", "Date non valide per calcolare i giorni: giorni richiesti manualmente.")
 
     if not days:
-        days = "3"
-        logger.log_event(
-            "INIT",
-            "WARNING",
-            "Date non sufficienti/valide per calcolare i giorni: uso fallback 3 giorni."
-        )
+        days = input(f"{Fore.GREEN}>> Quanti giorni di viaggio? (obbligatorio) {Style.RESET_ALL}").strip()
+        while not days.isdigit() or int(days) <= 0:
+            logger.log_event("INIT", "WARNING", "Numero giorni non valido: inserire un intero positivo.")
+            days = input(f"{Fore.GREEN}>> Inserisci i giorni (intero positivo): {Style.RESET_ALL}").strip()
     
     logger.info(f"Input: {dest}, {days}gg, {budget_total or 'N/D'}€, {companion}")
 
