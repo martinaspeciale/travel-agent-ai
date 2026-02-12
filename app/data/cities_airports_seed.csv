@@ -1,0 +1,130 @@
+city,country,iata,airport_name
+Tirana,Albania,TIA,Aeroporto Internazionale di Tirana
+Andorra la Vella,Andorra,LEU,Aeroporto Andorra-La Seu d Urgell
+Buenos Aires,Argentina,EZE,Aeroporto Internazionale Ministro Pistarini
+Vienna,Austria,VIE,Aeroporto Internazionale di Vienna
+Bruxelles,Belgio,BRU,Aeroporto di Bruxelles
+Minsk,Bielorussia,MSQ,Aeroporto Nazionale di Minsk
+La Paz,Bolivia,LPB,Aeroporto Internazionale El Alto
+Santa Cruz de la Sierra,Bolivia,VVI,Aeroporto Viru Viru
+Sarajevo,Bosnia ed Erzegovina,SJJ,Aeroporto Internazionale di Sarajevo
+Rio de Janeiro,Brasile,GIG,Aeroporto Galeao
+Sao Paulo,Brasile,GRU,Aeroporto Internazionale di Guarulhos
+Sofia,Bulgaria,SOF,Aeroporto di Sofia
+Montreal,Canada,YUL,Montreal Trudeau International Airport
+Toronto,Canada,YYZ,Toronto Pearson International Airport
+Vancouver,Canada,YVR,Vancouver International Airport
+Praga,Cechia,PRG,Aeroporto Vaclav Havel Praga
+Santiago,Cile,SCL,Aeroporto Arturo Merino Benitez
+Bogota,Colombia,BOG,Aeroporto El Dorado
+Medellin,Colombia,MDE,Aeroporto Jose Maria Cordova
+San Jose,Costa Rica,SJO,Aeroporto Internazionale Juan Santamaria
+Zagabria,Croazia,ZAG,Aeroporto di Zagabria
+L Avana,Cuba,HAV,Aeroporto Internazionale Jose Marti
+Copenaghen,Danimarca,CPH,Aeroporto di Copenaghen
+Guayaquil,Ecuador,GYE,Aeroporto Jose Joaquin de Olmedo
+Quito,Ecuador,UIO,Aeroporto Internazionale Mariscal Sucre
+Tallinn,Estonia,TLL,Aeroporto di Tallinn
+Helsinki,Finlandia,HEL,Aeroporto di Helsinki
+Parigi,Francia,CDG,Aeroporto di Parigi Charles de Gaulle
+Berlino,Germania,BER,Aeroporto di Berlino Brandeburgo
+Francoforte,Germania,FRA,Aeroporto di Francoforte
+Monaco di Baviera,Germania,MUC,Aeroporto di Monaco di Baviera
+Atene,Grecia,ATH,Aeroporto Internazionale di Atene
+Dublino,Irlanda,DUB,Aeroporto di Dublino
+Reykjavik,Islanda,KEF,Aeroporto Internazionale di Keflavik
+Alghero,Italia,AHO,"Aeroporto Internazionale ""Riviera del Corallo"""
+Aosta,Italia,AOT,"Aeroporto della Valle d'Aosta ""Corrado Gex""\nAéroport de la Vallée d'Aoste ""Corrado Gex"""
+Bari,Italia,BRI,Aeroporto di Bari Karol Wojtyla
+Bellizzi,Italia,QSR,Aeroporto di Salerno-Costa d'Amalfi
+Bologna,Italia,BLQ,Aeroporto di Bologna Guglielmo Marconi
+Bolzano,Italia,BZO,Aeroporto Bolzano-Dolomiti\n(DE) Flughafen Bozen-Dolomiten
+Brindisi,Italia,BDS,"Aeroporto ""Papola Casale"" di Brindisi\nAeroporto del Salento"
+Cagliari,Italia,CAG,Aeroporto di Cagliari Elmas
+Campo Nell'elba,Italia,EBA,Aeroporto di Marina di Campo
+Catania,Italia,CTA,Aeroporto di Catania Fontanarossa
+Ciampino,Italia,CIA,"Aeroporto Internazionale ""Giovan Battista Pastine"""
+Cinisi,Italia,PMO,"Aeroporto Internazionale ""Falcone e Borsellino"""
+Comiso,Italia,CIY,"Aeroporto di Comiso ""Pio La Torre"""
+Crotone,Italia,CRV,"Aeroporto di Crotone-Sant'Anna ""Pitagora"""
+Cuneo,Italia,CUF,Aeroporto di Cuneo
+Elmas,Italia,CAG,"Aeroporto ""Mario Mameli"" di Cagliari"
+Falconara Marittima,Italia,AOI,"Aeroporto delle Marche ""Raffaello Sanzio"""
+Ferno,Italia,MXP,Aeroporto di Milano-Malpensa
+Firenze,Italia,FLR,Aeroporto di Firenze Peretola
+Fiumicino,Italia,FCO,"Aeroporto Internazionale ""Leonardo da Vinci"""
+Foggia,Italia,FOG,"Aeroporto di Foggia ""Gino Lisa"""
+Forli,Italia,FRL,"Aeroporto di Forlì ""Luigi Ridolfi"""
+Genova,Italia,GOA,Aeroporto di Genova Cristoforo Colombo
+Grosseto,Italia,GRS,"Aeroporto della Maremma""Corrado Baccarini"""
+Grottaglie,Italia,TAR,"Aeroporto di Grottaglie ""Marcello Arlotta"""
+Lamezia Terme,Italia,SUF,Aeroporto Internazionale di Lamezia Terme
+Lampedusa,Italia,LMP,Aeroporto di Lampedusa
+Milano,Italia,MXP,Aeroporto di Milano Malpensa
+Montichiari,Italia,VBS,"Aeroporto ""Gabriele D'Annunzio"""
+Napoli,Italia,NAP,Aeroporto di Napoli Capodichino
+Olbia,Italia,OLB,"Aeroporto di Olbia ""Costa Smeralda"""
+Orio Al Serio,Italia,BGY,"Aeroporto Internazionale ""Il Caravaggio"""
+Palermo,Italia,PMO,Aeroporto di Palermo Falcone Borsellino
+Parma,Italia,PMF,"Aeroporto di Parma ""Giuseppe Verdi"""
+Perugia,Italia,PEG,"Aeroporto Internazionale dell'Umbria-Perugia ""San Francesco d'Assisi"""
+Pescara,Italia,PSR,Aeroporto Internazionale d'Abruzzo
+Peschiera Borromeo,Italia,LIN,"Aeroporto di Milano-Linate ""Enrico Forlanini"""
+Pisa,Italia,PSA,Aeroporto di Pisa Galileo Galilei
+Reggio Calabria,Italia,REG,"Aeroporto dello Stretto ""Tito Minniti"""
+Rimini,Italia,RMI,"Aeroporto Internazionale di Rimini - San Marino ""Federico Fellini"""
+Roma,Italia,FCO,Aeroporto di Roma Fiumicino
+Ronchi Dei Legionari,Italia,TRS,"Aeroporto di Trieste-Ronchi dei Legionari ""Pietro Savorgnan di Brazzà""\nAeroporto del Friuli Venezia Giulia"
+Torino,Italia,TRN,Aeroporto di Torino Caselle
+Trapani/marsala,Italia,TPS,"Aeroporto di Trapani-Birgi ""Vincenzo Florio""\nAeroporto militare ""Livio Bassi"""
+Treviso,Italia,TSF,"Aeroporto di Treviso-Sant'Angelo ""Antonio Canova"""
+Venezia,Italia,VCE,Aeroporto di Venezia Marco Polo
+Verona,Italia,VRN,Aeroporto di Verona Valerio Catullo
+Villafranca Di Verona/caselle,Italia,VRN,"Aeroporto di Verona-Villafranca ""Valerio Catullo"""
+Villanova D’albenga,Italia,ALL,"Aeroporto Internazionale di Villanova d'Albenga ""Clemente Panero"""
+Riga,Lettonia,RIX,Aeroporto di Riga
+Vilnius,Lituania,VNO,Aeroporto di Vilnius
+Lussemburgo,Lussemburgo,LUX,Aeroporto di Lussemburgo
+Skopje,Macedonia del Nord,SKP,Aeroporto Internazionale di Skopje
+Cancun,Messico,CUN,Aeroporto Internazionale di Cancun
+Citta del Messico,Messico,MEX,Aeroporto Internazionale di Citta del Messico
+Chisinau,Moldavia,RMO,Aeroporto Internazionale di Chisinau
+Podgorica,Montenegro,TGD,Aeroporto di Podgorica
+Oslo,Norvegia,OSL,Aeroporto di Oslo
+Amsterdam,Paesi Bassi,AMS,Aeroporto di Amsterdam Schiphol
+Panama,Panama,PTY,Aeroporto Internazionale Tocumen
+Asuncion,Paraguay,ASU,Aeroporto Silvio Pettirossi
+Lima,Peru,LIM,Aeroporto Internazionale Jorge Chavez
+Varsavia,Polonia,WAW,Aeroporto Chopin di Varsavia
+Lisbona,Portogallo,LIS,Aeroporto di Lisbona
+Londra,Regno Unito,LHR,Aeroporto di Londra Heathrow
+Punta Cana,Repubblica Dominicana,PUJ,Aeroporto Internazionale di Punta Cana
+Santo Domingo,Repubblica Dominicana,SDQ,Aeroporto Las Americas
+Bucarest,Romania,OTP,Aeroporto Henri Coanda
+Mosca,Russia,SVO,Aeroporto Sheremetyevo
+San Marino,San Marino,RMI,Aeroporto di Rimini Federico Fellini
+Belgrado,Serbia,BEG,Aeroporto di Belgrado Nikola Tesla
+Bratislava,Slovacchia,BTS,Aeroporto di Bratislava
+Lubiana,Slovenia,LJU,Aeroporto Joze Pucnik Lubiana
+Barcellona,Spagna,BCN,Aeroporto di Barcellona El Prat
+Madrid,Spagna,MAD,Aeroporto di Madrid Barajas
+Boston,Stati Uniti,BOS,Boston Logan International Airport
+Chicago,Stati Uniti,ORD,Chicago O Hare International Airport
+Dallas,Stati Uniti,DFW,Dallas Fort Worth International Airport
+Las Vegas,Stati Uniti,LAS,Harry Reid International Airport
+Los Angeles,Stati Uniti,LAX,Los Angeles International Airport
+Miami,Stati Uniti,MIA,Miami International Airport
+New York,Stati Uniti,JFK,John F. Kennedy International Airport
+San Francisco,Stati Uniti,SFO,San Francisco International Airport
+Seattle,Stati Uniti,SEA,Seattle Tacoma International Airport
+Washington,Stati Uniti,IAD,Washington Dulles International Airport
+Stoccolma,Svezia,ARN,Aeroporto di Stoccolma Arlanda
+Ginevra,Svizzera,GVA,Aeroporto di Ginevra
+Zurigo,Svizzera,ZRH,Aeroporto di Zurigo
+Ankara,Turchia,ESB,Aeroporto Esenboga
+Istanbul,Turchia,IST,Aeroporto di Istanbul
+Kiev,Ucraina,KBP,Aeroporto Boryspil
+Budapest,Ungheria,BUD,Aeroporto di Budapest
+Montevideo,Uruguay,MVD,Aeroporto Internazionale di Carrasco
+Citta del Vaticano,Vaticano,FCO,Aeroporto di Roma Fiumicino
+Caracas,Venezuela,CCS,Aeroporto Internazionale Simon Bolivar
