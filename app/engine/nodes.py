@@ -42,7 +42,12 @@ def init_node(state: TravelAgentState):
             pass
 
     if not days:
-        days = input(f"{Fore.GREEN}>> Quanti giorni? {Style.RESET_ALL}").strip()
+        days = "3"
+        logger.log_event(
+            "INIT",
+            "WARNING",
+            "Date non sufficienti/valide per calcolare i giorni: uso fallback 3 giorni."
+        )
     
     logger.info(f"Input: {dest}, {days}gg, {budget_total or 'N/D'}€, {companion}")
 
