@@ -25,6 +25,9 @@ def init_node(state: TravelAgentState):
     interests = input(f"{Fore.GREEN}>> Interessi? {Style.RESET_ALL}").strip()
     budget_total = input(f"{Fore.GREEN}>> Budget totale indicativo (€)? {Style.RESET_ALL}").strip()
     companion = input(f"{Fore.GREEN}>> Con chi viaggi? (Solo/Coppia/Famiglia) {Style.RESET_ALL}").strip() or "Solo"
+    origin = input(f"{Fore.GREEN}>> Partenza volo (citta, opzionale)? {Style.RESET_ALL}").strip()
+    depart_date = input(f"{Fore.GREEN}>> Data andata (YYYY-MM-DD, opzionale)? {Style.RESET_ALL}").strip()
+    return_date = input(f"{Fore.GREEN}>> Data ritorno (YYYY-MM-DD, opzionale)? {Style.RESET_ALL}").strip()
     
     logger.info(f"Input: {dest}, {days}gg, {budget_total or 'N/D'}€, {companion}")
 
@@ -38,6 +41,9 @@ def init_node(state: TravelAgentState):
         "budget": f"{budget_total}€" if budget_total else "",
         "budget_total": budget_total or None,
         "companion": companion,
+        "origin": origin or None,
+        "depart_date": depart_date or None,
+        "return_date": return_date or None,
         "retry_count": 0,
         "is_approved": False,
         "itinerary": [],
