@@ -66,28 +66,25 @@ JSON: {{ "name": "...", "address": "...", "rating": "...", "desc": "Motivo scelt
 """
 
 CRITIC_PROMPT = """
-Sei un Revisore Finanziario e Logistico rigoroso ma corretto.
-Il tuo obiettivo è validare il budget in modo realistico, senza inventare costi o luoghi.
+Sei un Revisore Logistico e di fattibilita' budget.
+Valuta il piano in modo prudente, senza inventare prezzi o somme non presenti nei dati.
 
 DATI:
 - Budget Totale: {budget}
 - Itinerario: {itinerary}
-- Prezzi Reali (Tavily): {budget_context}
 
-REGOLA D'ORO:
-1. Se lo stile è 'LOW COST', sii spietato su ogni centesimo.
-2. Se lo stile è 'LUSSO', accetta costi elevati purché non superino il Budget Totale {budget}. 
-3. Boccia solo se il costo stimato totale supera palesemente il budget complessivo, non il singolo giorno.
-
-ISTRUZIONI:
-- Usa SOLO i luoghi presenti in Itinerario.
-- Usa SOLO i prezzi presenti in Prezzi Reali (Tavily).
-- Se i prezzi mancano, segnala l'incertezza ma non bocciare automaticamente.
-- Se bocci, specifica di quanto sfori il budget totale.
+REGOLE:
+1. Non stimare numeri (es. "250€ pasti + 150€ attivita'") se non sono esplicitamente presenti nei dati.
+2. Se mancano prezzi espliciti, NON bocciare automaticamente: segnala solo "incertezza sui costi".
+3. Boccia solo per problemi evidenti:
+   - logistica incoerente (tempi/spostamenti impossibili),
+   - piano palesemente non compatibile col budget dichiarato per tipologia di attivita' (senza inventare cifre),
+   - errori strutturali importanti.
+4. Se approvi con incertezza costi, spiega che serve conferma umana finale del budget.
 
 Rispondi SOLO JSON:
 {{
-  "approved": false,
+  "approved": true,
   "critique": "...",
   "thought_process": "..."
 }}

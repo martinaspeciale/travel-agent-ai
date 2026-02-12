@@ -120,6 +120,20 @@ def print_terminal_report(state):
             print(f"      data: {dep_date} | orario: {dep_time}")
             if url:
                 print(f"      {url}")
+            ret_title = selected.get("return_title")
+            if ret_title and ret_title != "n/d":
+                ret_price = selected.get("return_price_value")
+                try:
+                    ret_price_text = f"{float(ret_price):.2f}" if ret_price is not None else "n/d"
+                except (TypeError, ValueError):
+                    ret_price_text = "n/d"
+                ret_date = selected.get("return_depart_date", "n/d")
+                ret_time = selected.get("return_depart_time", "n/d")
+                ret_url = selected.get("return_url", "")
+                print(f"   2. {ret_title} | prezzo stimato: {ret_price_text}")
+                print(f"      data: {ret_date} | orario: {ret_time}")
+                if ret_url:
+                    print(f"      {ret_url}")
     
     itinerary = state.get('itinerary', [])
     for day in itinerary:
@@ -192,6 +206,26 @@ def generate_html_report(state):
                 )
             else:
                 html += f"<li>{title} | prezzo stimato: {price} | data: {dep_date} | orario: {dep_time}</li>"
+
+            ret_title = selected.get("return_title")
+            if ret_title and ret_title != "n/d":
+                ret_price = selected.get("return_price_value")
+                try:
+                    ret_price_text = f"{float(ret_price):.2f}" if ret_price is not None else "n/d"
+                except (TypeError, ValueError):
+                    ret_price_text = "n/d"
+                ret_date = selected.get("return_depart_date", "n/d")
+                ret_time = selected.get("return_depart_time", "n/d")
+                ret_url = selected.get("return_url", "")
+                if ret_url:
+                    html += (
+                        f"<li>{ret_title} | prezzo stimato: {ret_price_text} | data: {ret_date} | orario: {ret_time} "
+                        f"- <a href='{ret_url}' target='_blank'>Link</a></li>"
+                    )
+                else:
+                    html += (
+                        f"<li>{ret_title} | prezzo stimato: {ret_price_text} | data: {ret_date} | orario: {ret_time}</li>"
+                    )
             html += "</ul>"
         html += "</div>"
     
@@ -254,6 +288,23 @@ def generate_docx_report(state):
             if url:
                 p_link = doc.add_paragraph(style='List Bullet')
                 _add_docx_hyperlink(p_link, "Apri offerta volo", url)
+
+            ret_title = selected.get("return_title")
+            if ret_title and ret_title != "n/d":
+                ret_price = selected.get("return_price_value")
+                try:
+                    ret_price_text = f"{float(ret_price):.2f}" if ret_price is not None else "n/d"
+                except (TypeError, ValueError):
+                    ret_price_text = "n/d"
+                ret_date = selected.get("return_depart_date", "n/d")
+                ret_time = selected.get("return_depart_time", "n/d")
+                ret_url = selected.get("return_url", "")
+                doc.add_paragraph(
+                    f"2. {ret_title} | prezzo stimato: {ret_price_text} | data: {ret_date} | orario: {ret_time}"
+                )
+                if ret_url:
+                    p_link = doc.add_paragraph(style='List Bullet')
+                    _add_docx_hyperlink(p_link, "Apri offerta volo ritorno", ret_url)
 
     for day in state.get('itinerary', []):
         # Intestazione Giorno

@@ -1,9 +1,12 @@
 import os
 import re
 import json
+import csv
+import unicodedata
 import urllib.parse
 import urllib.request
 import urllib.error
+from pathlib import Path
 from datetime import date, timedelta
 from tavily import TavilyClient
 from app.core.logger import logger
@@ -15,37 +18,46 @@ tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 serpapi_key = os.getenv("SERPAPI_API_KEY")
 
 
-_AIRPORT_ALIASES = {
-    # Italy
-    "pisa": "PSA",
-    "bari": "BRI",
-    "roma": "FCO",
-    "rome": "FCO",
-    "milano": "MXP",
-    "milan": "MXP",
-    "napoli": "NAP",
-    "naples": "NAP",
-    "torino": "TRN",
-    "turin": "TRN",
-    "bologna": "BLQ",
-    "venezia": "VCE",
-    "venice": "VCE",
-    "firenze": "FLR",
-    "florence": "FLR",
-    "palermo": "PMO",
-    "catania": "CTA",
-    "cagliari": "CAG",
-    "genova": "GOA",
-    "genoa": "GOA",
-}
+def _load_airport_seed():
+    """
+    Carica il CSV seed locale con schema:
+    city,country,iata,airport_name
+    """
+    seed_path = Path(__file__).resolve().parents[1] / "data" / "cities_airports_seed.csv"
+    rows = []
+    if not seed_path.exists():
+        logger.log_event("TOOL", "WARNING", f"Airport seed CSV not found: {seed_path}")
+        return rows
+
+    with seed_path.open("r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            iata = (row.get("iata") or "").strip().upper()
+            if not re.fullmatch(r"[A-Z]{3}", iata):
+                continue
+            rows.append({
+                "city": (row.get("city") or "").strip(),
+                "country": (row.get("country") or "").strip(),
+                "iata": iata,
+                "airport_name": (row.get("airport_name") or "").strip(),
+            })
+    return rows
+
+
+_AIRPORT_SEED = _load_airport_seed()
+
+
+def _norm_text(value: str) -> str:
+    text = (value or "").strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return text
 
 
 def _normalize_airport_id(raw_value: str) -> str:
     """
-    Converte input utente (città/aeroporto/codice) nel formato richiesto da SerpApi.
-    - Se trova un codice IATA (3 lettere) lo usa.
-    - Altrimenti prova alias città -> IATA.
-    - In fallback usa i primi 3 caratteri uppercase.
+    Converte input utente in IATA usando SOLO il CSV seed locale.
+    Supporta: IATA, città, nome aeroporto.
     """
     value = (raw_value or "").strip()
     if not value:
@@ -60,16 +72,29 @@ def _normalize_airport_id(raw_value: str) -> str:
     if m:
         return m.group(1).upper()
 
-    lower = value.lower()
-    for key, code in _AIRPORT_ALIASES.items():
-        if key in lower:
-            return code
+    lower = _norm_text(value)
+    best_code = ""
+    best_score = -1
+    for row in _AIRPORT_SEED:
+        city = _norm_text(row.get("city", ""))
+        airport_name = _norm_text(row.get("airport_name", ""))
+        iata = row.get("iata", "")
 
-    # Fallback conservativo.
-    letters = re.sub(r"[^A-Za-z]", "", value).upper()
-    if len(letters) >= 3:
-        return letters[:3]
-    return upper[:3]
+        score = -1
+        if lower == city:
+            score = 100
+        elif lower == airport_name:
+            score = 95
+        elif lower and lower in city:
+            score = 80
+        elif lower and lower in airport_name:
+            score = 70
+
+        if score > best_score and iata:
+            best_score = score
+            best_code = iata
+
+    return best_code
 
 def _normalize_outbound_date(depart_date: str) -> str:
     """
@@ -174,6 +199,14 @@ def search_flights_tool(origin: str, destination: str, depart_date: str = "", re
 
         origin_id = _normalize_airport_id(origin)
         destination_id = _normalize_airport_id(destination)
+        if not origin_id or not destination_id:
+            logger.log_event(
+                "TOOL",
+                "WARNING",
+                f"Airport resolution failed from CSV (origin='{origin}' -> '{origin_id}', destination='{destination}' -> '{destination_id}')"
+            )
+            return []
+        logger.log_event("SERPAPI_FLIGHTS", "INFO", f"Resolved route: {origin} -> {origin_id} | {destination} -> {destination_id}")
         outbound_date = _normalize_outbound_date(depart_date)
         inbound_date = _normalize_return_date(return_date)
 
