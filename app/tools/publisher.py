@@ -5,6 +5,7 @@ from docx.shared import Pt, RGBColor
 from docx.opc.constants import RELATIONSHIP_TYPE as RELATIONSHIP_TYPE
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+from app.core.utils import format_terminal_link
 
 # --- CONFIGURAZIONE ---
 OUTPUT_DIR = "outputs"
@@ -31,12 +32,6 @@ def generate_gmaps_search_link(name, address):
     safe_query = urllib.parse.quote(query)
     # Usa l'API di ricerca universale ufficiale
     return f"https://www.google.com/maps/search/?api=1&query={safe_query}"
-
-def _format_terminal_link(label, url):
-    if not url:
-        return label
-    # Plain URL for maximum compatibility across terminals
-    return f"{url}"
 
 def _add_docx_hyperlink(paragraph, text, url):
     """
@@ -151,7 +146,7 @@ def print_terminal_report(state):
             link = generate_gmaps_search_link(name, address)
             if link:
                 print("       Link:")
-                print(f"       {_format_terminal_link('Apri su Maps', link)}")
+                print(f"       {format_terminal_link('Apri su Maps', link)}")
             print("       " + "." * 20)
 
 def generate_html_report(state):

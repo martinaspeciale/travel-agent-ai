@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import sys
 import time
@@ -72,3 +73,25 @@ def typing_print(text, speed=0.003):
         # Aggiungiamo variabilità per renderlo più 'umano'
         time.sleep(speed + random.uniform(0, 0.005))
     print() # Va a capo alla fine
+
+
+def format_terminal_link(label: str, url: str) -> str:
+    """
+    Restituisce un hyperlink cliccabile in terminali compatibili con OSC 8.
+    Fallback: URL testuale per massima compatibilita'.
+    """
+    if not url:
+        return label
+
+    # Se non siamo su un terminale interattivo, evitiamo sequenze ANSI.
+    if not sys.stdout.isatty():
+        return f"{label}: {url}"
+
+    term = os.getenv("TERM", "")
+    if term.lower() == "dumb":
+        return f"{label}: {url}"
+
+    # https://iterm2.com/documentation-escape-codes.html
+    osc8 = f"\033]8;;{url}\033\\{label}\033]8;;\033\\"
+    # Mantiene sempre anche l'URL testuale per terminali/IDE che non supportano OSC 8.
+    return f"{osc8} ({url})"

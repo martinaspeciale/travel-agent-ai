@@ -11,7 +11,7 @@ from app.tools.maps import find_places_on_maps
 from app.core.logger import logger
 from app.core.utils import safe_json_parse
 from app.engine import prompts
-from app.core.utils import extract_budget_number
+from app.core.utils import extract_budget_number, format_terminal_link
 from app.tools.search import search_flights_tool
 
 init(autoreset=True)
@@ -248,7 +248,7 @@ def flight_search_node(state: TravelAgentState):
         print(f"- Data partenza: {best.get('depart_date', 'n/d')}")
         print(f"- Orario partenza: {best.get('depart_time', 'n/d')}")
         if best.get("url"):
-            print(f"- Link: {best.get('url')}")
+            print(f"- Link: {format_terminal_link('Apri volo', best.get('url'))}")
 
         if return_date:
             logger.log_event(
@@ -279,7 +279,7 @@ def flight_search_node(state: TravelAgentState):
                 print(f"- Data ritorno: {best_return.get('depart_date', 'n/d')}")
                 print(f"- Orario ritorno: {best_return.get('depart_time', 'n/d')}")
                 if best_return.get("url"):
-                    print(f"- Link: {best_return.get('url')}")
+                    print(f"- Link: {format_terminal_link('Apri volo ritorno', best_return.get('url'))}")
             else:
                 logger.log_event("FLIGHTS", "WARNING", "Nessuna opzione ritorno trovata.")
                 print("\nNessuna opzione ritorno trovata per la data indicata.")
