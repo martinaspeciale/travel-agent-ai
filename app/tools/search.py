@@ -195,7 +195,7 @@ def search_flights_tool(origin: str, destination: str, depart_date: str = "", re
     try:
         if not serpapi_key:
             logger.log_event("TOOL", "ERROR", "SERPAPI_API_KEY missing.")
-            return []
+            return "SerpApi non configurato: manca SERPAPI_API_KEY."
 
         origin_id = _normalize_airport_id(origin)
         destination_id = _normalize_airport_id(destination)
@@ -205,7 +205,10 @@ def search_flights_tool(origin: str, destination: str, depart_date: str = "", re
                 "WARNING",
                 f"Airport resolution failed from CSV (origin='{origin}' -> '{origin_id}', destination='{destination}' -> '{destination_id}')"
             )
-            return []
+            return (
+                "Impossibile risolvere aeroporto da CSV locale "
+                f"(origin='{origin}', destination='{destination}')."
+            )
         logger.log_event("SERPAPI_FLIGHTS", "INFO", f"Resolved route: {origin} -> {origin_id} | {destination} -> {destination_id}")
         outbound_date = _normalize_outbound_date(depart_date)
         inbound_date = _normalize_return_date(return_date)
@@ -287,7 +290,7 @@ def search_flights_tool(origin: str, destination: str, depart_date: str = "", re
         except Exception:
             body = ""
         logger.log_event("TOOL", "ERROR", f"SerpApi HTTP {e.code}: {body[:400] or str(e)}")
-        return []
+        return f"SerpApi HTTP {e.code}: {body[:240] or str(e)}"
     except Exception as e:
         logger.log_event("TOOL", "ERROR", f"SerpApi flights error: {e}")
-        return []
+        return f"Errore SerpApi flights: {str(e)}"

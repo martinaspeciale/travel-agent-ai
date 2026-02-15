@@ -211,6 +211,9 @@ def flight_search_node(state: TravelAgentState):
             depart_date=current_depart_date,
             return_date=return_date,
         )
+        if isinstance(rows, str):
+            logger.log_event("FLIGHTS", "WARNING", f"Tool flights fallback: {rows}")
+            rows = []
 
         if not rows:
             logger.log_event("FLIGHTS", "WARNING", "Nessuna opzione volo trovata.")
@@ -262,6 +265,9 @@ def flight_search_node(state: TravelAgentState):
                 depart_date=return_date,
                 return_date="",
             )
+            if isinstance(return_rows, str):
+                logger.log_event("FLIGHTS", "WARNING", f"Tool return flights fallback: {return_rows}")
+                return_rows = []
             if return_rows:
                 sorted_return_rows = _enrich_rows(return_rows, return_date)
                 best_return = sorted_return_rows[0]
@@ -496,6 +502,9 @@ def places_finder_node(state: TravelAgentState):
                 results = find_places_on_maps.invoke(query)
             except Exception as e:
                 logger.log_event("FINDER", "ERROR", f"Errore invoke tool: {e}")
+                results = []
+            if isinstance(results, str):
+                logger.log_event("FINDER", "WARNING", f"Tool maps fallback: {results}")
                 results = []
 
             # Se il tool ha restituito la lista di dict correttamente

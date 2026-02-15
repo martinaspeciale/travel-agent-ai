@@ -17,7 +17,7 @@ def find_places_on_maps(query: str):
     """
     logger.log_tool("GOOGLE_MAPS", f"Verifica posizione e rating per: {query}")
     if not gmaps:
-        return []
+        return "Google Maps non configurato: manca GOOGLE_MAPS_API_KEY."
 
     try:
         # Esegue la ricerca
@@ -26,7 +26,7 @@ def find_places_on_maps(query: str):
         # Gestione errori di quota o permessi (se abbiamo esaurito le chiamate)
         if response.get('status') != 'OK':
             logger.log_event("TOOL", "ERROR", f"Maps Status: {response.get('status')}")
-            return []
+            return f"Google Maps errore: status {response.get('status')}."
 
         results = response.get('results', [])
         if not results:
@@ -46,4 +46,4 @@ def find_places_on_maps(query: str):
 
     except Exception as e:
         logger.log_event("TOOL", "ERROR", f"Eccezione Maps: {str(e)}")
-        return []
+        return f"Google Maps eccezione: {str(e)}"

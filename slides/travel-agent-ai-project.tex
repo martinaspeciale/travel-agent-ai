@@ -42,7 +42,7 @@
 
 % --- Title ---
 \title[AI Travel Architect]{AI Travel Architect: Project Deep Dive}
-\subtitle{A Stateful Multi-Agent Travel Planning System}
+\subtitle{A Stateful Multi-Stage Agentic Workflow}
 \author{Martina Speciale}
 \institute{Travel-Agent-AI}
 \date{\today}
@@ -200,7 +200,7 @@ Plan text is converted into concrete places, then validated with external data.
     \item \textbf{Google Maps Tool}: resolves locations, addresses, ratings.
     \item \textbf{SerpApi Flights Tool}: retrieves structured flight options (one-way/return).
     \item \textbf{IATA seed resolver}: maps city names (IT/EN variants) to airport codes.
-    \item \textbf{Robust tool interface}: tools return usable error strings, not crashes.
+    \item \textbf{Robust tool interface}: tools return \texttt{list | error\_string}; nodes apply safe fallback on errors (no crashes).
     \item \textbf{Confidence signal}: based on verified vs non-verified places ratio.
 \end{itemize}
 
