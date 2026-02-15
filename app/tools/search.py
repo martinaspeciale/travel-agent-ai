@@ -142,6 +142,35 @@ def _normalize_return_date(return_date: str) -> str:
     text = (return_date or "").strip()
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
         return text
+    # Supporta input naturali tipo "1 marzo", "01 MARZO", "1 March".
+    month_map = {
+        "gennaio": 1, "january": 1,
+        "febbraio": 2, "february": 2,
+        "marzo": 3, "march": 3,
+        "aprile": 4, "april": 4,
+        "maggio": 5, "may": 5,
+        "giugno": 6, "june": 6,
+        "luglio": 7, "july": 7,
+        "agosto": 8, "august": 8,
+        "settembre": 9, "september": 9,
+        "ottobre": 10, "october": 10,
+        "novembre": 11, "november": 11,
+        "dicembre": 12, "december": 12,
+    }
+    m = re.match(r"^\s*(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\s*$", text, flags=re.IGNORECASE)
+    if m:
+        day = int(m.group(1))
+        month_key = m.group(2).strip().lower()
+        month = month_map.get(month_key)
+        if month:
+            year = date.today().year
+            try:
+                parsed = date(year, month, day)
+                if parsed < date.today():
+                    parsed = date(year + 1, month, day)
+                return parsed.isoformat()
+            except ValueError:
+                pass
     return ""
 
 
