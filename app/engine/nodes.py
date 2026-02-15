@@ -213,6 +213,26 @@ def flight_search_node(state: TravelAgentState):
         )
         if isinstance(rows, str):
             logger.log_event("FLIGHTS", "WARNING", f"Tool flights fallback: {rows}")
+            if "Impossibile risolvere aeroporto" in rows:
+                print("\nNon riesco a mappare la citta in un aeroporto (IATA).")
+                print("Potrebbe esserci un errore nel nome citta.")
+                new_origin = input(
+                    f"Inserisci di nuovo la citta di partenza [{origin}] (invio per mantenere): "
+                ).strip()
+                new_destination = input(
+                    f"Inserisci di nuovo la citta di destinazione [{destination}] (invio per mantenere): "
+                ).strip()
+                if new_origin:
+                    origin = new_origin
+                if new_destination:
+                    destination = new_destination
+                if new_origin or new_destination:
+                    logger.log_event(
+                        "FLIGHTS",
+                        "INFO",
+                        f"Route aggiornata da input utente: {origin} -> {destination}"
+                    )
+                    continue
             rows = []
 
         if not rows:
@@ -232,6 +252,8 @@ def flight_search_node(state: TravelAgentState):
                 "flight_summary": "No flight options found from configured sources.",
                 "flight_confidence_score": 0.0,
                 "depart_date": current_depart_date or None,
+                "origin": origin or None,
+                "destination": destination or None,
             }
 
         sorted_rows = _enrich_rows(rows, current_depart_date)
@@ -326,6 +348,8 @@ def flight_search_node(state: TravelAgentState):
                 "flight_summary": summary,
                 "flight_confidence_score": 0.8 if best.get("price_value") is not None else 0.5,
                 "depart_date": current_depart_date or None,
+                "origin": origin or None,
+                "destination": destination or None,
             }
 
         if choice == "n":
@@ -342,6 +366,8 @@ def flight_search_node(state: TravelAgentState):
             "flight_summary": "Flight suggestions collected but not confirmed by user.",
             "flight_confidence_score": 0.4,
             "depart_date": current_depart_date or None,
+            "origin": origin or None,
+            "destination": destination or None,
         }
 
     return {
@@ -349,6 +375,8 @@ def flight_search_node(state: TravelAgentState):
         "flight_summary": "Flight search stopped after max attempts.",
         "flight_confidence_score": 0.0,
         "depart_date": current_depart_date or None,
+        "origin": origin or None,
+        "destination": destination or None,
     }
 
 # --- 3. PLANNER NODE (RIFATTO) ---
