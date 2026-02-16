@@ -20,7 +20,7 @@ serpapi_key = os.getenv("SERPAPI_API_KEY")
 
 def _load_airport_seed():
     """
-    Carica il CSV seed locale con schema:
+    Load the local airport seed CSV with schema:
     city,country,iata,airport_name
     """
     seed_path = Path(__file__).resolve().parents[1] / "data" / "cities_airports_seed.csv"
@@ -56,8 +56,8 @@ def _norm_text(value: str) -> str:
 
 def _normalize_airport_id(raw_value: str) -> str:
     """
-    Converte input utente in IATA usando SOLO il CSV seed locale.
-    Supporta: IATA, città, nome aeroporto.
+    Convert user input to IATA code using only the local CSV seed.
+    Supports: IATA code, city name, airport name.
     """
     value = (raw_value or "").strip()
     if not value:
@@ -67,14 +67,14 @@ def _normalize_airport_id(raw_value: str) -> str:
     if re.fullmatch(r"[A-Z]{3}", upper):
         return upper
 
-    # Esempio: "Pisa (PSA)".
+    # Example: "Pisa (PSA)".
     m = re.search(r"\(([A-Za-z]{3})\)", value)
     if m:
         return m.group(1).upper()
 
     lower = _norm_text(value)
-    # Evita match ambigui su input troppo corti (es. "m", "x").
-    # Per input non-IATA richiediamo almeno 3 lettere utili.
+    # Avoid ambiguous matches for very short inputs (e.g. "m", "x").
+    # For non-IATA inputs, require at least 3 alphabetic characters.
     alpha_only = re.sub(r"[^a-z]", "", lower)
     if len(alpha_only) < 3:
         return ""
@@ -103,14 +103,14 @@ def _normalize_airport_id(raw_value: str) -> str:
 
 def _normalize_outbound_date(depart_date: str) -> str:
     """
-    SerpApi Google Flights richiede outbound_date in formato YYYY-MM-DD.
-    Se input non valido, usa una data di fallback (oggi + 30 giorni).
+    SerpApi Google Flights requires outbound_date in YYYY-MM-DD format.
+    If input is invalid, use a fallback date (today + 30 days).
     """
     text = (depart_date or "").strip()
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
         return text
 
-    # Supporta input naturali tipo "1 marzo", "01 MARZO", "1 March".
+    # Support natural-language inputs like "1 marzo", "01 MARZO", "1 March".
     month_map = {
         "gennaio": 1, "january": 1,
         "febbraio": 2, "february": 2,
@@ -134,7 +134,7 @@ def _normalize_outbound_date(depart_date: str) -> str:
             year = date.today().year
             try:
                 parsed = date(year, month, day)
-                # Se già passata, sposta all'anno prossimo.
+                # If already in the past, move to next year.
                 if parsed < date.today():
                     parsed = date(year + 1, month, day)
                 return parsed.isoformat()
@@ -147,7 +147,7 @@ def _normalize_return_date(return_date: str) -> str:
     text = (return_date or "").strip()
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
         return text
-    # Supporta input naturali tipo "1 marzo", "01 MARZO", "1 March".
+    # Support natural-language inputs like "1 marzo", "01 MARZO", "1 March".
     month_map = {
         "gennaio": 1, "january": 1,
         "febbraio": 2, "february": 2,
@@ -193,10 +193,10 @@ def _price_to_float(price_value):
 
 def search_prices_tool(query: str):
     """
-    Cerca su internet i prezzi attuali e consigli per risparmiare.
+    Search online for current prices and saving tips.
     """
     try:
-        # Cerchiamo informazioni specifiche sui costi
+        # Query for cost-specific information.
         search_query = f"ticket prices and free things to do {query}"
         results = tavily_client.search(query=search_query, max_results=2)
         
@@ -205,12 +205,12 @@ def search_prices_tool(query: str):
             title = res.get('title', 'Senza titolo')
             content = res.get('content', '').strip()
 
-            # Log in output: cosa ha trovato e dove
+            # Log what was found.
             logger.log_event("TAVILY", "RESULT", f"{title}")
             if content:
                 logger.log_event("TAVILY", "INFO", content[:240])
 
-            # Contesto per il critic (senza URL)
+            # Build critic context without URLs.
             context_lines.append(f"- {title}: {content}")
 
         if not context_lines:
@@ -224,7 +224,7 @@ def search_prices_tool(query: str):
 
 def search_flights_tool(origin: str, destination: str, depart_date: str = "", return_date: str = ""):
     """
-    Cerca opzioni voli tramite SerpApi (Google Flights) e ritorna risultati strutturati.
+    Search flight options via SerpApi (Google Flights) and return structured rows.
     """
     try:
         if not serpapi_key:

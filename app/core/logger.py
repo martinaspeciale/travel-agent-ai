@@ -10,14 +10,14 @@ from datetime import datetime
 from colorama import Fore, Style, init
 from app.core.utils import typing_print
 
-# Inizializza colorama
+# Initialize colorama.
 init(autoreset=True)
 
 class TravelLogger:
     def __init__(self):
-        # --- Componenti di Tracing ---
-        self.trace_id = str(uuid.uuid4())[:8]  # Trace ID unico per la sessione
-        self.node_start_time = time.time()     # Timer per calcolare la latenza (Span)
+        # --- Tracing components ---
+        self.trace_id = str(uuid.uuid4())[:8]  # Unique session trace ID.
+        self.node_start_time = time.time()     # Timer for event latency (span-like).
         
         self.LOG_DIR = "logs"
         if not os.path.exists(self.LOG_DIR):
@@ -28,7 +28,7 @@ class TravelLogger:
             f"log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
         )
         
-        # Colori Originali
+        # Original colors
         self.NODE_COLORS = {
             "router_node": Fore.MAGENTA,
             "trip_planner_node": Fore.CYAN,
@@ -64,7 +64,7 @@ Trace ID: {self.trace_id}
             f.write(header + "\n")
 
     def _calculate_latency(self):
-        """Calcola i ms passati dall'ultimo evento (Attributes - Slide 18)"""
+        """Return elapsed milliseconds since the previous event."""
         now = time.time()
         latency_ms = int((now - self.node_start_time) * 1000)
         self.node_start_time = now
@@ -92,7 +92,7 @@ Trace ID: {self.trace_id}
                 return self.NODE_NAMES[func_name], self.NODE_COLORS[func_name]
         return "SYSTEM", Fore.WHITE
 
-    # --- Metodi Smart (Emoji rimosse) ---
+    # --- Smart methods ---
     def info(self, msg): self._log("*", msg)
     def error(self, msg): self._log("!", msg, Fore.RED)
     def warning(self, msg): self._log("!", msg, Fore.YELLOW)
@@ -107,7 +107,7 @@ Trace ID: {self.trace_id}
         if color_override:
             node_color = color_override
 
-        # Output leggibile con header allineato rispetto al trace
+        # Readable output with aligned header.
         prefix = f"{Style.DIM}[{latency}ms]{Style.RESET_ALL} "
         tab_pad = self._pad_after_prefix(prefix)
         header_text = f"[{timestamp}] --- {node_name} ---"
@@ -116,7 +116,7 @@ Trace ID: {self.trace_id}
         
         self._write(f"[{timestamp}] --- {node_name} --- {latency}ms --- {level_icon} {msg}")
 
-    # --- Metodo Legacy ---
+    # --- Legacy method ---
     def log_event(self, node_name, event_type, message):
         latency = self._calculate_latency()
         timestamp = datetime.now().strftime("%H:%M:%S")

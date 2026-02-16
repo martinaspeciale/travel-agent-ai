@@ -360,7 +360,7 @@ def flight_search_node(state: TravelAgentState):
             current_depart_date = new_date
             continue
 
-        # skip o input non riconosciuto => prosegui senza bloccare il flusso
+        # skip or unrecognized input: continue without blocking the flow
         return {
             "flight_options": [],
             "flight_summary": "Flight suggestions collected but not confirmed by user.",
@@ -384,7 +384,7 @@ def trip_planner_node(state: TravelAgentState):
     logger.log_event("PLANNER", "START", "Pianificazione")
     
     if state.get("critic_feedback"):
-        # Iniettiamo un comando di "Cambio Rotta"
+        # Add a reroute instruction when the previous plan was rejected.
         feedback = f"\n[!] ATTENZIONE: Il piano precedente è stato BOCCIATO. Non riproporre le stesse attrazioni. Cambia tipologia di luoghi."
 
     feedback = state.get("critic_feedback")
@@ -393,7 +393,7 @@ def trip_planner_node(state: TravelAgentState):
         logger.log_event("PLANNER", "WARNING", f"Feedback Critic: {feedback}")
         feedback_instr = f"CORREGGI L'ITINERARIO PRECEDENTE BASANDOTI SU QUESTO ERRORE: {feedback}"
 
-    # Blacklist luoghi già proposti se il piano è stato bocciato
+    # Blacklist places that were already proposed when a plan is rejected.
     banned_places = []
     if state.get("critic_feedback") and state.get("itinerary"):
         for day in state.get("itinerary", []):
@@ -428,16 +428,16 @@ def trip_planner_node(state: TravelAgentState):
         feedback_instruction=feedback_instr
     )
     
-    # Chiamata LLM
+    # LLM call
     response = llm.invoke([HumanMessage(content=formatted_prompt)])
     
-    # Parsing JSON planner output
+    # Parse planner JSON output
     data = safe_json_parse(response.content)
     
-    # Estrazione sicura dei dati
+    # Safely extract output fields
     itinerary_data = data.get("itinerary", [])
 
-    # Stampa sintetica dell'itinerario proposto
+    # Print a compact preview of the proposed itinerary
     if itinerary_data and isinstance(itinerary_data, list):
         print("\nItinerario proposto:")
         for day in itinerary_data:
@@ -449,7 +449,7 @@ def trip_planner_node(state: TravelAgentState):
 
     status_feedback = state.get("critic_feedback")
 
-    # Fallback se il JSON è malformato
+    # Fallback if JSON is malformed
     if not itinerary_data or not isinstance(itinerary_data, list):
         logger.log_event("PLANNER", "ERROR", "JSON non valido, uso fallback.")
         itinerary_data = [{"day_number": 1, "focus": "Esplorazione", "places": [{"name": f"Centro {state['destination']}", "address": ""}]}]
@@ -524,9 +524,9 @@ def places_finder_node(state: TravelAgentState):
             
             logger.log_event("FINDER", "ACTION", f"Richiesta Tool per: {query}")
             
-            # --- CHIAMATA TRAMITE DECORATORE TOOL ---
+            # --- TOOL INVOCATION VIA DECORATOR ---
             try:
-                # Essendo un @tool, usiamo .invoke()
+                # Since this is a @tool, call it with .invoke()
                 results = find_places_on_maps.invoke(query)
             except Exception as e:
                 logger.log_event("FINDER", "ERROR", f"Errore invoke tool: {e}")
@@ -535,7 +535,7 @@ def places_finder_node(state: TravelAgentState):
                 logger.log_event("FINDER", "WARNING", f"Tool maps fallback: {results}")
                 results = []
 
-            # Se il tool ha restituito la lista di dict correttamente
+            # If the tool returned a valid list of dicts
             if results and isinstance(results, list) and len(results) > 0:
                 real_place = results[0]
                 if not _address_matches_destination(real_place.get("address", ""), state["destination"]):
@@ -642,11 +642,11 @@ def logistics_critic_node(state: TravelAgentState):
     data = safe_json_parse(response.content, default_value={"approved": True})
     
     if data.get('approved'):
-        # Usiamo 'RESULT' per il successo (+)
+        # Use 'RESULT' for success (+)
         logger.log_event("CRITIC", "RESULT", "[+] Approvato: L'itinerario rispetta i vincoli logistici e di budget.")
         return {"is_approved": True, "critic_feedback": None}
     else:
-        # Usiamo 'ERROR' o 'WARNING' per la bocciatura [!]
+        # Use 'ERROR' or 'WARNING' for rejection [!]
         logger.log_event("CRITIC", "ERROR", f"[!] Bocciato: {data.get('critique')}")
         return {"is_approved": False, "critic_feedback": data.get('critique')}
 
@@ -682,13 +682,13 @@ def ask_human_node(state: TravelAgentState):
 def failure_handler_node(state: TravelAgentState):
     logger.log_event("SYSTEM", "ERROR", "[!] FATAL: Impossibile riconciliare i vincoli dopo vari tentativi.")
     
-    # Costruiamo un messaggio di spiegazione basato sull'ultimo feedback del Critic
+    # Build an explanation message using the latest critic feedback
     failure_msg = (
         "L'agente non è riuscito a generare un itinerario che soddisfi "
         f"sia il budget che la logistica. Ultimo feedback: {state.get('critic_feedback')}"
     )
     
-    # Creiamo un itinerario 'vuoto' per non far crashare il Publisher
+    # Return an empty itinerary so Publisher does not crash
     return {
         "itinerary": [], 
         "is_approved": False, 

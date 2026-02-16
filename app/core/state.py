@@ -1,19 +1,19 @@
 from typing import TypedDict, List, Optional
 
-# Struttura di un Luogo
+# Place structure
 class PlaceInfo(TypedDict, total=False):
     name: str
     address: str
     rating: str
     description: Optional[str]
 
-# Struttura di un Giorno
+# Day structure
 class DayPlan(TypedDict):
     day_number: int
     focus: str
     places: List[PlaceInfo]
 
-# Opzione volo suggerita
+# Suggested flight option
 class FlightOption(TypedDict, total=False):
     title: str
     url: str
@@ -30,7 +30,7 @@ class FlightOption(TypedDict, total=False):
     source: str
     link: str
 
-# Stato dell'Agente
+# Agent state
 class TravelAgentState(TypedDict):
     # Input
     user_input: str
@@ -51,7 +51,7 @@ class TravelAgentState(TypedDict):
     flight_options: Optional[List[FlightOption]]
     flight_summary: Optional[str]
     
-    # Controllo
+    # Control
     critic_feedback: Optional[str]
     budget_context: Optional[str]
     confidence_score: float

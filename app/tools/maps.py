@@ -12,18 +12,18 @@ gmaps = googlemaps.Client(key=api_key) if api_key else None
 @tool
 def find_places_on_maps(query: str):
     """
-    Cerca luoghi reali su Google Maps. 
-    Ritorna una lista di risultati strutturati per il Finder.
+    Search real places on Google Maps.
+    Return a structured list of results for the Finder node.
     """
     logger.log_tool("GOOGLE_MAPS", f"Verifica posizione e rating per: {query}")
     if not gmaps:
         return "Google Maps non configurato: manca GOOGLE_MAPS_API_KEY."
 
     try:
-        # Esegue la ricerca
+        # Run the search.
         response = gmaps.places(query=query)
         
-        # Gestione errori di quota o permessi (se abbiamo esaurito le chiamate)
+        # Handle quota/permission errors (for example when quota is exhausted).
         if response.get('status') != 'OK':
             logger.log_event("TOOL", "ERROR", f"Maps Status: {response.get('status')}")
             return f"Google Maps errore: status {response.get('status')}."
@@ -32,9 +32,9 @@ def find_places_on_maps(query: str):
         if not results:
             return []
 
-        # Estraiamo solo i dati necessari in formato lista di dict
+        # Keep only required fields in a list of dicts.
         structured_data = []
-        for place in results[:1]:  # Prendiamo il top result
+        for place in results[:1]:  # Keep the top result only.
             structured_data.append({
                 "name": place.get('name'),
                 "address": place.get('formatted_address'),

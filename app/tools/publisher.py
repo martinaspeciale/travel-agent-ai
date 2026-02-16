@@ -7,13 +7,13 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from app.core.utils import format_terminal_link
 
-# --- CONFIGURAZIONE ---
+# --- CONFIGURATION ---
 OUTPUT_DIR = "outputs"
 
 def _ensure_output_dir():
     """
-    Crea la cartella outputs se non esiste.
-    Usa il percorso assoluto per evitare errori se lanciato da altre posizioni.
+    Create the outputs folder if it does not exist.
+    Use an absolute path to avoid issues when run from other locations.
     """
     base_path = os.getcwd()
     full_output_path = os.path.join(base_path, OUTPUT_DIR)
@@ -23,14 +23,14 @@ def _ensure_output_dir():
     return full_output_path
 
 def generate_gmaps_search_link(name, address):
-    """Genera un link di ricerca universale (evita errori 404)."""
+    """Generate a universal Google Maps search link (avoids 404s)."""
     if not name and not address:
         return None
     
     query = f"{name} {address}".strip()
-    # Codifica URL sicura
+    # Safe URL encoding.
     safe_query = urllib.parse.quote(query)
-    # Usa l'API di ricerca universale ufficiale
+    # Use the official universal search endpoint.
     return f"https://www.google.com/maps/search/?api=1&query={safe_query}"
 
 def _add_docx_hyperlink(paragraph, text, url):
@@ -150,7 +150,7 @@ def print_terminal_report(state):
             print("       " + "." * 20)
 
 def generate_html_report(state):
-    """Genera un report HTML visivamente ricco."""
+    """Generate a visually rich HTML report."""
     output_dir = _ensure_output_dir()
     
     dest = state.get('destination', 'Viaggio')
@@ -250,7 +250,7 @@ def generate_html_report(state):
     return filepath
 
 def generate_docx_report(state):
-    """Genera un file Word ben formattato."""
+    """Generate a well-formatted Word report."""
     output_dir = _ensure_output_dir()
     
     destination = state.get('destination', 'Viaggio')
@@ -259,9 +259,9 @@ def generate_docx_report(state):
     
     doc = Document()
     
-    # Titolo Principale
+    # Main title
     title = doc.add_heading(f'Itinerario: {destination.upper()}', 0)
-    title.alignment = 1 # Center
+    title.alignment = 1  # Center
 
     doc.add_paragraph(f"Ecco il tuo piano di viaggio generato dall'AI per {destination}.")
 
@@ -302,7 +302,7 @@ def generate_docx_report(state):
                     _add_docx_hyperlink(p_link, "Apri offerta volo ritorno", ret_url)
 
     for day in state.get('itinerary', []):
-        # Intestazione Giorno
+        # Day heading
         doc.add_heading(f"Giorno {day['day_number']}: {day['focus']}", level=1)
         
         for p in day.get('places', []):
@@ -310,25 +310,25 @@ def generate_docx_report(state):
             rating = p.get('rating', 'N/A')
             address = p.get('address', '')
             
-            # Nome Luogo 
+            # Place name
             p_para = doc.add_paragraph()
             runner = p_para.add_run(f"{name}")
             runner.bold = True
             runner.font.size = Pt(12)
-            runner.font.color.rgb = RGBColor(0, 51, 102) # Blu scuro
+            runner.font.color.rgb = RGBColor(0, 51, 102)  # Dark blue
             
-            # Dettagli
+            # Details
             doc.add_paragraph(f"   ⭐ Rating: {rating}")
             doc.add_paragraph(f"   Indirizzo: {address}")
             
-            # Link Maps
+            # Maps link
             link = generate_gmaps_search_link(name, address)
             if link:
                 
                 p_link = doc.add_paragraph(style='List Bullet')
                 _add_docx_hyperlink(p_link, "Apri su Maps", link)
             
-            doc.add_paragraph("_" * 40) # Separatore
+            doc.add_paragraph("_" * 40)  # Separator
 
     doc.save(filepath)
     return filepath

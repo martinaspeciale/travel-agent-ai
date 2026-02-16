@@ -17,7 +17,7 @@ def route_after_critic(state: TravelAgentState):
     if state.get("is_approved", False):
         return "approved"
     
-    # Se il Critic boccia e abbiamo esaurito i tentativi (e.g. 3)
+    # If the critic rejects and retries are exhausted (e.g. 3), fail.
     if state.get("retry_count", 0) >= 3:
         return "fail"
         
@@ -45,7 +45,7 @@ workflow.add_conditional_edges(
     "planner",
     route_after_planner, 
     {
-        "continue": "finder"         # Vai al Finder
+        "continue": "finder"         # Go to Finder
     }
 )
 
@@ -64,8 +64,8 @@ workflow.add_conditional_edges(
     "ask_human",
     lambda state: "approved" if state["is_approved"] else "rejected",
     {
-        "approved": "critic",   # L'utente ha detto OK --> vai al Critic
-        "rejected": "planner"   # L'utent ha dato feedback --> torna al Planner
+        "approved": "critic",   # User approved -> go to Critic
+        "rejected": "planner"   # User gave feedback -> go back to Planner
     }
 )
 
