@@ -130,6 +130,7 @@ with verifiable places and actionable outputs.
     \draw[->] (conf) -- node[above] {low conf.} (hitl);
     \draw[->] (hitl) |- node[pos=0.25,right] {reject} (planner);
     \draw[->] (hitl) |- node[pos=0.25,left] {approve} (critic);
+    \draw[->] (critic.west) to[out=180,in=180] node[left] {rejected + retries left} (planner.west);
     \draw[->] (critic) -- node[above] {max retries} (fail);
     \draw[->] (fail) |- (endn);
 \end{tikzpicture}
