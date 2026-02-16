@@ -164,7 +164,6 @@ travel-agent-ai/
 
 An integral part of this course project was preparing and evolving the slide material alongside the implementation.
 
-* **Baseline deck:** [`slides/agentic-ai-seai-v0.tex`](./slides/agentic-ai-seai-v0.tex)
-* **Enhanced course deck:** [`slides/agentic-ai-seai.tex`](./slides/agentic-ai-seai.tex)
-* **Project deep dive deck:** [`slides/travel-agent-ai-project.tex`](./slides/travel-agent-ai-project.tex)
+* **Compiled full deck (PDF):** [`agentic-ai-seai.pdf`](./agentic-ai-seai.pdf) — source `.tex`: [`slides/agentic-ai-seai.tex`](./slides/agentic-ai-seai.tex)
+* **Compiled project deck (PDF):** [`travel-agent-ai.pdf`](./travel-agent-ai.pdf) — source `.tex`: [`slides/travel-agent-ai-project.tex`](./slides/travel-agent-ai-project.tex)
     

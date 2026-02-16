@@ -155,12 +155,12 @@ with verifiable places and actionable outputs.
 \begin{frame}{Shared Memory: TravelAgentState}
 \textbf{Persistent graph state (TypedDict)}
 \begin{itemize}
-    \item Input: \texttt{destination}, \texttt{interests}, \texttt{budget}, \texttt{companion}, \texttt{origin}, \texttt{depart\_date}, \texttt{return\_date}
+    \item Input: \texttt{user\_input}, \texttt{destination}, \texttt{interests}, \texttt{budget}, \texttt{budget\_total}, \texttt{companion}, \texttt{origin}, \texttt{depart\_date}, \texttt{return\_date}
     \item \texttt{days}: auto-computed from dates when possible, otherwise requested explicitly
     \item Planning output: \texttt{travel\_style}, \texttt{itinerary}
-    \item Flight output: \texttt{flight\_options}, \texttt{flight\_summary}
+    \item Flight output: \texttt{flight\_options}, \texttt{flight\_summary}, \texttt{flight\_confidence\_score}
     \item Control fields: \texttt{confidence\_score}, \texttt{critic\_feedback}, \texttt{retry\_count}, \texttt{is\_approved}
-    \item Context fields: \texttt{banned\_places}
+    \item Context fields: \texttt{banned\_places}, \texttt{budget\_context}
 \end{itemize}
 
 \begin{block}{Why this matters}
@@ -248,7 +248,7 @@ Tool-verified retrieval reduces hallucinations and improves itinerary trust.
 \end{columns}
 
 \vspace{0.2cm}
-\begin{block}{Engineering payoff}
+\begin{block}{Practical payoff}
 The output is not only text generation: it is a reproducible, inspectable,
 and user-ready travel artifact.
 \end{block}
@@ -273,7 +273,7 @@ and user-ready travel artifact.
 \end{frame}
 
 \begin{frame}{Lessons Learned}
-\textbf{What we learned in implementation}
+\textbf{Key implementation lessons}
 \begin{itemize}
     \item \textbf{Deterministic gates beat self-reported confidence:} moving confidence to verified-place ratio made routing more stable.
     \item \textbf{Fail-soft tooling is mandatory:} tool errors must degrade gracefully (fallback + continue), not crash the graph.
