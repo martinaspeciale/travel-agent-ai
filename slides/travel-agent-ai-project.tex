@@ -272,6 +272,20 @@ and user-ready travel artifact.
 \end{itemize}
 \end{frame}
 
+\begin{frame}{Lessons Learned}
+\textbf{What we learned in implementation}
+\begin{itemize}
+    \item \textbf{Deterministic gates beat self-reported confidence:} moving confidence to verified-place ratio made routing more stable.
+    \item \textbf{Fail-soft tooling is mandatory:} tool errors must degrade gracefully (fallback + continue), not crash the graph.
+    \item \textbf{Input normalization is essential:} city\(\to\)IATA mapping and date normalization need strict guards to avoid silent misrouting.
+    \item \textbf{Retry loops need hard boundaries:} explicit retry caps and failure exits prevent planner-critic dead loops.
+\end{itemize}
+
+\begin{block}{Practical takeaway}
+Reliability came from control logic and state discipline more than from prompt wording alone.
+\end{block}
+\end{frame}
+
 \begin{frame}{Takeaways}
 \begin{block}{What this project demonstrates}
 A production-oriented agent is a system, not a single model call:
