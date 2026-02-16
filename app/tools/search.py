@@ -73,6 +73,11 @@ def _normalize_airport_id(raw_value: str) -> str:
         return m.group(1).upper()
 
     lower = _norm_text(value)
+    # Evita match ambigui su input troppo corti (es. "m", "x").
+    # Per input non-IATA richiediamo almeno 3 lettere utili.
+    alpha_only = re.sub(r"[^a-z]", "", lower)
+    if len(alpha_only) < 3:
+        return ""
     best_code = ""
     best_score = -1
     for row in _AIRPORT_SEED:
@@ -85,9 +90,9 @@ def _normalize_airport_id(raw_value: str) -> str:
             score = 100
         elif lower == airport_name:
             score = 95
-        elif lower and lower in city:
+        elif len(alpha_only) >= 3 and lower in city:
             score = 80
-        elif lower and lower in airport_name:
+        elif len(alpha_only) >= 3 and lower in airport_name:
             score = 70
 
         if score > best_score and iata:

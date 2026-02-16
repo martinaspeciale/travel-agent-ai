@@ -131,7 +131,7 @@ def travel_router_node(state: TravelAgentState):
     return {"travel_style": data.get("style", "RELAX")}
 
 
-# --- 2b. FLIGHT SEARCH NODE (minimal wiring) ---
+# --- 2b. FLIGHT SEARCH NODE ---
 def flight_search_node(state: TravelAgentState):
     def _extract_price_value(*chunks):
         text = " ".join([(c or "") for c in chunks])
@@ -379,7 +379,7 @@ def flight_search_node(state: TravelAgentState):
         "destination": destination or None,
     }
 
-# --- 3. PLANNER NODE (RIFATTO) ---
+# --- 3. PLANNER NODE ---
 def trip_planner_node(state: TravelAgentState):
     logger.log_event("PLANNER", "START", "Pianificazione")
     
