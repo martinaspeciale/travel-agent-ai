@@ -526,7 +526,7 @@ def places_finder_node(state: TravelAgentState):
             
             # --- TOOL INVOCATION VIA DECORATOR ---
             try:
-                # Since this is a @tool, call it with .invoke()
+                # Since this is a @tool, let's call it with .invoke()
                 results = find_places_on_maps.invoke(query)
             except Exception as e:
                 logger.log_event("FINDER", "ERROR", f"Errore invoke tool: {e}")
@@ -582,8 +582,9 @@ def confidence_evaluator_node(state: TravelAgentState):
 
     itinerary = state.get("itinerary", [])
     reasons = []
+    places_confidence = 0.0
     if not itinerary:
-        confidence = 0.0
+        places_confidence = 0.0
         reasons.append("Itinerario vuoto")
     else:
         unverified = 0
@@ -598,12 +599,12 @@ def confidence_evaluator_node(state: TravelAgentState):
         if total_places > 0:
             verified = total_places - unverified
             verified_ratio = verified / total_places
-            confidence = verified_ratio
+            places_confidence = verified_ratio
             reasons.append(f"Verificati {verified}/{total_places} luoghi")
             if unverified > 0:
                 reasons.append(f"Non verificati {unverified}/{total_places}")
         else:
-            confidence = 0.0
+            places_confidence = 0.0
 
         budget_total = state.get("budget_total")
         total_budget = extract_budget_number(str(budget_total)) if budget_total else extract_budget_number(state.get("budget", ""))
@@ -611,6 +612,23 @@ def confidence_evaluator_node(state: TravelAgentState):
         daily_budget = total_budget / num_days
         if daily_budget < 60:
             reasons.append(f"Budget giornaliero basso ({round(daily_budget, 2)}€)")
+
+    flight_conf_raw = state.get("flight_confidence_score")
+    flight_confidence = None
+    if flight_conf_raw is not None:
+        try:
+            flight_confidence = max(0.0, min(1.0, float(flight_conf_raw)))
+        except (TypeError, ValueError):
+            flight_confidence = None
+
+    if flight_confidence is not None:
+        # Weighted blend: places quality remains primary, flight signal refines confidence.
+        confidence = (0.7 * places_confidence) + (0.3 * flight_confidence)
+        reasons.append(
+            f"Confidenza voli {round(flight_confidence, 2)} (peso 30%)"
+        )
+    else:
+        confidence = places_confidence
 
     confidence = max(0.0, min(1.0, round(confidence, 2)))
     logger.log_event("CONFIDENCE", "INFO", f"Confidenza Agente: {confidence}")
