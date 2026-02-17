@@ -383,15 +383,15 @@ def flight_search_node(state: TravelAgentState):
 def trip_planner_node(state: TravelAgentState):
     logger.log_event("PLANNER", "START", "Pianificazione")
     
-    if state.get("critic_feedback"):
-        # Add a reroute instruction when the previous plan was rejected.
-        feedback = f"\n[!] ATTENZIONE: Il piano precedente è stato BOCCIATO. Non riproporre le stesse attrazioni. Cambia tipologia di luoghi."
-
     feedback = state.get("critic_feedback")
     feedback_instr = ""
     if feedback:
         logger.log_event("PLANNER", "WARNING", f"Feedback Critic: {feedback}")
-        feedback_instr = f"CORREGGI L'ITINERARIO PRECEDENTE BASANDOTI SU QUESTO ERRORE: {feedback}"
+        feedback_instr = (
+            "ATTENZIONE: Il piano precedente è stato BOCCIATO. "
+            "Non riproporre le stesse attrazioni. Cambia tipologia di luoghi.\n"
+            f"CORREGGI L'ITINERARIO PRECEDENTE BASANDOTI SU QUESTO ERRORE: {feedback}"
+        )
 
     # Blacklist places that were already proposed when a plan is rejected.
     banned_places = []
