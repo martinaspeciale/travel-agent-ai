@@ -16,6 +16,8 @@ from app.tools.search import search_flights_tool
 
 init(autoreset=True)
 
+BUDGET_ALERT_THRESHOLD_EUR = 70.0
+
 
 def _parse_flexible_date(raw_text: str):
     text = (raw_text or "").strip()
@@ -409,7 +411,7 @@ def trip_planner_node(state: TravelAgentState):
     total_budget = extract_budget_number(str(budget_total)) if budget_total else extract_budget_number(state.get("budget", ""))
     num_days = int(state['days']) if state['days'].isdigit() else 1
     daily_budget = total_budget / num_days
-    if daily_budget < 60:
+    if daily_budget < BUDGET_ALERT_THRESHOLD_EUR:
         low_cost_instr = (
             "BUDGET BASSO: proponi solo street food, mercati, free tour e luoghi gratuiti. "
             "Evita ristoranti costosi o attività a pagamento."
@@ -510,8 +512,16 @@ def places_finder_node(state: TravelAgentState):
 
         return any(token in address_n for token in alternatives if token)
 
-    if daily_budget < 70:
+    if daily_budget < BUDGET_ALERT_THRESHOLD_EUR:
         logger.log_event("FINDER", "WARNING", f"Budget critico rilevato: {daily_budget}€/giorno.")
+        budget_context = (
+            f"Budget critico rilevato nel finder: {round(daily_budget, 2)}€/giorno. "
+            "Privilegiare attivita gratuite o low-cost."
+        )
+    else:
+        budget_context = (
+            f"Budget giornaliero stimato: {round(daily_budget, 2)}€/giorno."
+        )
 
     updated_itinerary = []
     
@@ -574,7 +584,7 @@ def places_finder_node(state: TravelAgentState):
             for line in day_print_lines:
                 print(f"- {line}")
         
-    return {"budget_context": "", "itinerary": updated_itinerary}
+    return {"budget_context": budget_context, "itinerary": updated_itinerary}
 
 # --- 5. CONFIDENCE NODE (POST-FINDER) ---
 def confidence_evaluator_node(state: TravelAgentState):
@@ -610,7 +620,7 @@ def confidence_evaluator_node(state: TravelAgentState):
         total_budget = extract_budget_number(str(budget_total)) if budget_total else extract_budget_number(state.get("budget", ""))
         num_days = int(state['days']) if state['days'].isdigit() else 1
         daily_budget = total_budget / num_days
-        if daily_budget < 60:
+        if daily_budget < BUDGET_ALERT_THRESHOLD_EUR:
             reasons.append(f"Budget giornaliero basso ({round(daily_budget, 2)}€)")
 
     flight_conf_raw = state.get("flight_confidence_score")
