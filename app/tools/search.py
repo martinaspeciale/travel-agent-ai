@@ -9,6 +9,7 @@ import urllib.error
 from pathlib import Path
 from datetime import date, timedelta
 from tavily import TavilyClient
+from langchain_core.tools import tool
 from app.core.logger import logger
 from dotenv import load_dotenv
 
@@ -222,6 +223,7 @@ def search_prices_tool(query: str):
         return "Informazioni sui prezzi non disponibili."
 
 
+@tool
 def search_flights_tool(origin: str, destination: str, depart_date: str = "", return_date: str = ""):
     """
     Search flight options via SerpApi (Google Flights) and return structured rows.

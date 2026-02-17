@@ -205,12 +205,12 @@ def flight_search_node(state: TravelAgentState):
             f"Search flights {origin} -> {destination} (depart: {current_depart_date or 'N/D'})"
         )
 
-        rows = search_flights_tool(
-            origin=origin,
-            destination=destination,
-            depart_date=current_depart_date,
-            return_date=return_date,
-        )
+        rows = search_flights_tool.invoke({
+            "origin": origin,
+            "destination": destination,
+            "depart_date": current_depart_date,
+            "return_date": return_date,
+        })
         if isinstance(rows, str):
             logger.log_event("FLIGHTS", "WARNING", f"Tool flights fallback: {rows}")
             if "Impossibile risolvere aeroporto" in rows:
@@ -281,12 +281,12 @@ def flight_search_node(state: TravelAgentState):
                 "START",
                 f"Search return flight {destination} -> {origin} (depart: {return_date})"
             )
-            return_rows = search_flights_tool(
-                origin=destination,
-                destination=origin,
-                depart_date=return_date,
-                return_date="",
-            )
+            return_rows = search_flights_tool.invoke({
+                "origin": destination,
+                "destination": origin,
+                "depart_date": return_date,
+                "return_date": "",
+            })
             if isinstance(return_rows, str):
                 logger.log_event("FLIGHTS", "WARNING", f"Tool return flights fallback: {return_rows}")
                 return_rows = []
