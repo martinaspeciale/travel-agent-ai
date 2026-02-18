@@ -702,8 +702,7 @@ def ask_human_node(state: TravelAgentState):
         motivo = input("Cosa non va? Lascia un feedback per l'AI: ")
         return {
             "is_approved": False,
-            "critic_feedback": motivo,
-            "retry_count": state.get("retry_count", 0) + 1
+            "critic_feedback": motivo
         }
     
 
