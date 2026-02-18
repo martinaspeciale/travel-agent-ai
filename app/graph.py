@@ -5,9 +5,6 @@ from app.engine.nodes import (
     places_finder_node, confidence_evaluator_node, logistics_critic_node, publisher_node, ask_human_node, failure_handler_node
 )
 
-def route_after_planner(state: TravelAgentState):
-    return "continue"
-
 def route_after_confidence(state: TravelAgentState):
     if state["confidence_score"] < 0.7:
         return "ask_human"
@@ -40,14 +37,7 @@ workflow.set_entry_point("init")
 workflow.add_edge("init", "router")
 workflow.add_edge("router", "flight_search")
 workflow.add_edge("flight_search", "planner")
-
-workflow.add_conditional_edges(
-    "planner",
-    route_after_planner, 
-    {
-        "continue": "finder"         # Go to Finder
-    }
-)
+workflow.add_edge("planner", "finder")
 
 workflow.add_edge("finder", "confidence")
 
