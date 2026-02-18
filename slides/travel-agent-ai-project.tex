@@ -144,7 +144,7 @@ with verifiable places and actionable outputs.
     \item \textbf{FLIGHT\_SEARCH} --- resolves city$\rightarrow$IATA, proposes best outbound/return flight, asks user confirmation.
     \item \textbf{PLANNER} --- generates a day-by-day draft itinerary coherent with style, dates, and budget signal.
     \item \textbf{FINDER} --- grounds each proposed place via Google Maps (address/rating), marking verified vs non-verified.
-    \item \textbf{CONFIDENCE} --- computes reliability score from verified-place ratio; if low ($<0.7$), triggers HITL.
+    \item \textbf{CONFIDENCE} --- computes reliability from grounded places (\(70\%\)) + flight signal (\(30\%\), when available); if low ($<0.7$), triggers HITL.
     \item \textbf{ASK\_HUMAN} --- interruption node: user can approve continuation or reject and force re-planning.
     \item \textbf{CRITIC} --- validates feasibility and consistency (logistics + budget plausibility); approves or sends feedback.
     \item \textbf{PUBLISHER} --- generates final artifacts (terminal, HTML, DOCX) once approved.
@@ -202,7 +202,7 @@ Plan text is converted into concrete places, then validated with external data.
     \item \textbf{SerpApi Flights Tool}: retrieves structured flight options (one-way/return).
     \item \textbf{IATA seed resolver}: maps city names (IT/EN variants) to airport codes.
     \item \textbf{Robust tool interface}: tools return \texttt{list | error\_string}; nodes apply safe fallback on errors (no crashes).
-    \item \textbf{Confidence signal}: based on verified vs non-verified places ratio.
+    \item \textbf{Confidence signal}: weighted blend of grounded-place reliability (\(70\%\)) and flight confidence (\(30\%\), if present).
 \end{itemize}
 
 \begin{alertblock}{Failure mode addressed}
@@ -222,7 +222,7 @@ Tool-verified retrieval reduces hallucinations and improves itinerary trust.
 
 \textbf{Human-in-the-Loop trigger}
 \begin{itemize}
-    \item If \texttt{confidence\_score < 0.7},
+    \item If blended \texttt{confidence\_score < 0.7},
     execution pauses for human confirmation.
     \item User can approve (continue) or reject (re-plan).
 \end{itemize}
@@ -275,7 +275,7 @@ and user-ready travel artifact.
 \begin{frame}{Lessons Learned}
 \textbf{Key implementation lessons}
 \begin{itemize}
-    \item \textbf{Deterministic gates beat self-reported confidence:} moving confidence to verified-place ratio made routing more stable.
+    \item \textbf{Deterministic gates beat self-reported confidence:} grounding-driven confidence (places-first, flights as secondary signal) made routing more stable.
     \item \textbf{Fail-soft tooling is mandatory:} tool errors must degrade gracefully (fallback + continue), not crash the graph.
     \item \textbf{Input normalization is essential:} city\(\to\)IATA mapping and date normalization need strict guards to avoid silent misrouting.
     \item \textbf{Retry loops need hard boundaries:} explicit retry caps and failure exits prevent planner-critic dead loops.
