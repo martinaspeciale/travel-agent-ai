@@ -8,3 +8,4 @@ googlemaps
 termcolor
 python-docx
 colorama
+tavily-python
